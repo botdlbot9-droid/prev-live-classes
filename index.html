@@ -12,7 +12,6 @@
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
     .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
     
-    /* Mobile Responsive */
     @media (max-width: 768px) {
       .app { padding: 16px; border-radius: 20px; }
       .header h1 { font-size: 1.3rem; }
@@ -70,6 +69,16 @@
     
     .footer-note { color: #7c8aa0; font-size: 0.8rem; text-align: center; margin-top: 30px; border-top: 1px solid #eef2f6; padding-top: 22px; }
     .reset-banner { background: #fff3cd; color: #856404; padding: 8px 16px; border-radius: 40px; font-size: 0.8rem; text-align: center; margin-bottom: 16px; display: none; }
+    
+    /* VideoJS custom */
+    .video-js .vjs-big-play-button {
+      background: rgba(11, 26, 51, 0.8) !important;
+      border-radius: 50% !important;
+      border: 2px solid white !important;
+    }
+    .video-js .vjs-big-play-button:hover {
+      background: rgba(11, 26, 51, 1) !important;
+    }
   </style>
 </head>
 <body>
@@ -113,12 +122,9 @@
 <script>
   // ==================== DEVELOPER TOOLS PROTECTION (Desktop Only) ====================
   (function() {
-    // Check if mobile device
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
     
-    // Only apply dev tools protection on desktop
     if (!isMobile) {
-      // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
       document.addEventListener('keydown', function(e) {
         if (e.key === 'F12' || 
             (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
@@ -128,7 +134,6 @@
         }
       });
 
-      // Detect dev tools
       let devToolsDetected = false;
 
       function detectDevTools() {
@@ -152,7 +157,6 @@
       setInterval(detectDevTools, 100);
       setInterval(function() { console.clear(); }, 100);
 
-      // Override console methods
       const noop = function() {};
       console.log = noop;
       console.warn = noop;
@@ -176,13 +180,11 @@
       console.timeEnd = noop;
       console.timeLog = noop;
 
-      // Prevent window.open for dev tools
       window.open = function() {
         window.location.href = 'https://www.google.com';
         return null;
       };
 
-      // Prevent eval
       window.eval = function() {
         window.location.href = 'https://www.google.com';
         return null;
@@ -384,6 +386,9 @@
         if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
           try { window[key].dispose(); } catch(e) {}
         }
+        if (key.startsWith('hls_') && window[key] && typeof window[key].destroy === 'function') {
+          try { window[key].destroy(); } catch(e) {}
+        }
       }
     };
 
@@ -460,7 +465,7 @@
       }
     }
 
-    // ==================== RENDER CHAPTERS (UPDATED PLAYER) ====================
+    // ==================== RENDER CHAPTERS (UPDATED PLAYER - EXTENSION STYLE) ====================
 
     function renderChapters(playlistId) {
       const container = document.getElementById('chaptersContainer');
@@ -492,7 +497,7 @@
       });
       container.innerHTML = html;
 
-      // ========== UPDATED PLAY BUTTON HANDLER ==========
+      // ========== UPDATED PLAY BUTTON HANDLER - EXTENSION STYLE ==========
       container.querySelectorAll('.play-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const playerId = this.dataset.playerId;
@@ -503,7 +508,7 @@
           // Toggle visibility
           if (wrapper.style.display === 'block') {
             wrapper.style.display = 'none';
-            // Cleanup HLS instance
+            // Cleanup
             if (window[`hls_${playerId}`]) {
               try { window[`hls_${playerId}`].destroy(); } catch(e) {}
               delete window[`hls_${playerId}`];
@@ -530,16 +535,25 @@
           const videoEl = document.getElementById(playerId);
           if (!videoEl) return;
           
-          // ========== CORE PLAYER LOGIC ==========
-          // Check if it's an HLS stream and HLS.js is supported
+          // ========== EXTENSION STYLE PLAYER ==========
+          // This mimics how the Chrome extension plays m3u8
+          
+          // Method 1: Try HLS.js with extension-like headers
           if (Hls.isSupported() && link.includes('.m3u8')) {
-            // Use HLS.js directly for better CORS handling
+            console.log('🎬 Playing with HLS.js (extension style)');
+            
             const hls = new Hls({
               enableWorker: true,
               lowLatencyMode: true,
+              maxBufferLength: 30,
+              maxMaxBufferLength: 60,
               xhrSetup: function(xhr, url) {
+                // Extension style headers
                 xhr.setRequestHeader('Referer', 'https://classplusapp.com/');
                 xhr.setRequestHeader('Origin', 'https://classplusapp.com');
+                xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+                // Try to mimic extension's cookie handling
+                xhr.withCredentials = true;
               }
             });
             
@@ -547,21 +561,23 @@
             hls.attachMedia(videoEl);
             
             hls.on(Hls.Events.MANIFEST_PARSED, function() {
+              console.log('✅ Manifest parsed, playing...');
               videoEl.play().catch(e => console.log('Play error:', e));
             });
             
             hls.on(Hls.Events.ERROR, function(event, data) {
+              console.log('HLS Error:', data);
               if (data.fatal) {
-                console.error('HLS fatal error:', data);
-                // Fallback to Video.js
+                // Try fallback with Video.js
+                console.log('🔄 Trying fallback player...');
                 tryFallbackPlayer(videoEl, link, playerId);
               }
             });
             
-            // Store hls instance for cleanup
+            // Store hls instance
             window[`hls_${playerId}`] = hls;
             
-            // Create videojs for controls
+            // Create videojs for controls (overlay)
             const player = videojs(videoEl, {
               controls: true,
               fluid: true,
@@ -573,10 +589,9 @@
             window[`player_${playerId}`] = player;
             
           } else {
-            // Fallback: Use Video.js
+            // Method 2: Video.js with HLS
             tryFallbackPlayer(videoEl, link, playerId);
           }
-          // ========== END CORE PLAYER LOGIC ==========
           
           wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
@@ -589,6 +604,8 @@
           try { window[`hls_${playerId}`].destroy(); } catch(e) {}
           delete window[`hls_${playerId}`];
         }
+        
+        console.log('🎬 Playing with Video.js fallback');
         
         const player = videojs(videoEl, {
           autoplay: true,
@@ -643,7 +660,7 @@
       document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded with updated player');
+    console.log('✅ Video Portal loaded with extension-style player');
   })();
 </script>
 </body>
