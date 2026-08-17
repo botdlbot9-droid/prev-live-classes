@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - Complete System</title>
+  <title>Admin Panel</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
@@ -29,6 +29,8 @@
     .btn-outline { background: transparent; color: #1a2b4c; border: 1px solid #d0dae8; }
     .btn-outline:hover { background: #f0f4fe; }
     .btn-sm { padding: 8px 18px; font-size: 0.85rem; flex: 0; }
+    .btn-copy { background: #2d7a9b; color: white; padding: 6px 16px; border: none; border-radius: 40px; cursor: pointer; font-size: 0.8rem; }
+    .btn-copy:hover { background: #1f5f7a; }
     
     .entry-list { background: #f5f8fe; border-radius: 20px; padding: 6px 0; margin: 12px 0 6px; max-height: 350px; overflow-y: auto; }
     .entry-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid #e6edf6; }
@@ -51,6 +53,7 @@
     .password-gate .pwd-error { color: #b33a3a; font-size: 0.9rem; margin-top: 6px; }
     .api-status { font-size: 0.8rem; color: #4c637f; padding: 6px 14px; background: #eef3fa; border-radius: 40px; display: inline-block; }
     .status-connected { background: #e6f5e6; color: #1a5d3c; }
+    .status-error { background: #fee; color: #b33a3a; }
     
     .playlist-header { background: #eef3fa; padding: 10px 16px; font-weight: 700; border-radius: 12px; margin: 8px 0 4px; display: flex; justify-content: space-between; align-items: center; }
     .tab-buttons { display: flex; gap: 12px; margin-bottom: 16px; }
@@ -59,7 +62,8 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     
-    .key-display { background: #f0f4fb; padding: 12px 16px; border-radius: 12px; font-family: monospace; word-break: break-all; margin: 8px 0; }
+    .key-display { background: #f0f4fb; padding: 12px 16px; border-radius: 12px; font-family: monospace; word-break: break-all; margin: 8px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .key-display .key-text { font-size: 1.1rem; color: #0b1a33; }
   </style>
 </head>
 <body>
@@ -132,10 +136,13 @@
         <select id="userSelect"><option value="">Select user</option></select>
         <button class="btn btn-primary" id="generateKeyBtn">🔄 Generate Key</button>
       </div>
-      <div id="keyDisplay" class="key-display" style="display:none;"></div>
+      <div id="keyDisplay" class="key-display" style="display:none;">
+        <span class="key-text" id="keyText"></span>
+        <button class="btn-copy" id="copyKeyBtn" onclick="copyKey()">📋 Copy</button>
+      </div>
       <div id="keyFeedback" class="toast-msg"></div>
 
-      <div class="section-title">👥 All Users</div>
+      <div class="section-title">👥 All Users & Keys</div>
       <div class="entry-list" id="userList"><div class="empty-state">Loading...</div></div>
     </div>
     
@@ -146,6 +153,86 @@
 </div>
 
 <script>
+  // ==================== DEVELOPER TOOLS PROTECTION ====================
+  (function() {
+    // Disable right click
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      window.location.href = 'https://www.google.com';
+    });
+
+    // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'F12' || 
+          (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+          (e.ctrlKey && e.key === 'U')) {
+        e.preventDefault();
+        window.location.href = 'https://www.google.com';
+      }
+    });
+
+    // Detect dev tools
+    let devToolsDetected = false;
+
+    function detectDevTools() {
+      const threshold = 160;
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+      
+      if (widthThreshold || heightThreshold) {
+        if (!devToolsDetected) {
+          devToolsDetected = true;
+          console.clear();
+          setTimeout(function() {
+            window.location.href = 'https://www.google.com';
+          }, 100);
+        }
+      } else {
+        devToolsDetected = false;
+      }
+    }
+
+    setInterval(detectDevTools, 100);
+    setInterval(function() { console.clear(); }, 100);
+
+    // Override console methods
+    const noop = function() {};
+    console.log = noop;
+    console.warn = noop;
+    console.error = noop;
+    console.info = noop;
+    console.debug = noop;
+    console.table = noop;
+    console.trace = noop;
+    console.dir = noop;
+    console.dirxml = noop;
+    console.group = noop;
+    console.groupEnd = noop;
+    console.groupCollapsed = noop;
+    console.clear = noop;
+    console.count = noop;
+    console.countReset = noop;
+    console.assert = noop;
+    console.profile = noop;
+    console.profileEnd = noop;
+    console.time = noop;
+    console.timeEnd = noop;
+    console.timeLog = noop;
+
+    // Prevent window.open
+    window.open = function() {
+      window.location.href = 'https://www.google.com';
+      return null;
+    };
+
+    // Prevent eval
+    window.eval = function() {
+      window.location.href = 'https://www.google.com';
+      return null;
+    };
+  })();
+
+  // ==================== MAIN ADMIN APP ====================
   (function() {
     const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
     const ADMIN_PASSWORD = 'admin123';
@@ -164,38 +251,56 @@
       });
     });
 
-    // ----- Load Playlists -----
+    // ----- API Call -----
+    async function apiCall(endpoint, options = {}) {
+      try {
+        const url = API_BASE + endpoint;
+        const response = await fetch(url, {
+          ...options,
+          headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+      }
+    }
+
+    // ----- Load Functions -----
     async function loadPlaylists() {
       try {
-        const response = await fetch(API_BASE + '/playlists');
-        const data = await response.json();
+        const data = await apiCall('/playlists');
         if (data.success) {
           playlists = data.playlists;
           renderAdminList();
           updatePlaylistSelect();
           updateApiStatus('connected');
+          showFeedback('✅ Playlists loaded', 'success', 'playlistFeedback');
         }
       } catch (error) {
         showFeedback('❌ Failed to load: ' + error.message, 'error', 'playlistFeedback');
+        updateApiStatus('error');
       }
     }
 
-    // ----- Load Users -----
     async function loadUsers() {
       try {
-        const response = await fetch(API_BASE + '/users');
-        const data = await response.json();
+        const data = await apiCall('/users');
         if (data.success) {
           users = data.users;
           renderUserList();
           updateUserSelect();
+          updateApiStatus('connected');
+          showFeedback('✅ Users loaded', 'success', 'userFeedback');
         }
       } catch (error) {
-        showFeedback('❌ Failed to load users', 'error', 'userFeedback');
+        showFeedback('❌ Failed to load users: ' + error.message, 'error', 'userFeedback');
+        updateApiStatus('error');
       }
     }
 
-    // ----- Add Playlist -----
+    // ----- Add Functions -----
     async function addPlaylist() {
       const name = document.getElementById('newPlaylistName').value.trim();
       if (!name) {
@@ -203,12 +308,10 @@
         return;
       }
       try {
-        const response = await fetch(API_BASE + '/playlists', {
+        const data = await apiCall('/playlists', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name })
         });
-        const data = await response.json();
         if (data.success) {
           document.getElementById('newPlaylistName').value = '';
           showFeedback('✅ Playlist added', 'success', 'playlistFeedback');
@@ -219,7 +322,6 @@
       }
     }
 
-    // ----- Add Chapter -----
     async function addChapter() {
       const playlistId = document.getElementById('playlistSelect').value;
       const name = document.getElementById('chapterName').value.trim();
@@ -229,12 +331,10 @@
         return;
       }
       try {
-        const response = await fetch(API_BASE + '/playlists/chapter', {
+        const data = await apiCall('/playlists/chapter', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ playlistId, chapterName: name, chapterLink: link })
         });
-        const data = await response.json();
         if (data.success) {
           document.getElementById('chapterName').value = '';
           document.getElementById('chapterLink').value = '';
@@ -246,7 +346,6 @@
       }
     }
 
-    // ----- Add User -----
     async function addUser() {
       const email = document.getElementById('newUserEmail').value.trim();
       if (!email) {
@@ -254,12 +353,10 @@
         return;
       }
       try {
-        const response = await fetch(API_BASE + '/users', {
+        const data = await apiCall('/users', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email })
         });
-        const data = await response.json();
         if (data.success) {
           document.getElementById('newUserEmail').value = '';
           showFeedback('✅ User added. Key: ' + data.key, 'success', 'userFeedback');
@@ -280,17 +377,16 @@
         return;
       }
       try {
-        const response = await fetch(API_BASE + '/keys/generate', {
+        const data = await apiCall('/keys/generate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId })
         });
-        const data = await response.json();
         if (data.success) {
           const display = document.getElementById('keyDisplay');
-          display.style.display = 'block';
-          display.innerHTML = `🔑 New Key: <strong>${data.key}</strong><br><small>Expires: ${new Date(data.expires_at).toLocaleString()}</small>`;
-          showFeedback('✅ Key generated', 'success', 'keyFeedback');
+          const keyText = document.getElementById('keyText');
+          display.style.display = 'flex';
+          keyText.textContent = data.key;
+          showFeedback('✅ Key generated! Click Copy to copy', 'success', 'keyFeedback');
           loadUsers();
         }
       } catch (error) {
@@ -298,13 +394,55 @@
       }
     }
 
-    // ----- Delete Playlist -----
-    async function deletePlaylist(playlistId) {
-      if (!confirm('Delete this playlist and all chapters?')) return;
+    // ----- Copy Key -----
+    window.copyKey = function() {
+      const keyText = document.getElementById('keyText').textContent;
+      if (!keyText) {
+        showFeedback('⚠️ No key to copy', 'error', 'keyFeedback');
+        return;
+      }
+      
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(keyText)
+          .then(() => {
+            showFeedback('✅ Key copied to clipboard!', 'success', 'keyFeedback');
+            document.getElementById('copyKeyBtn').textContent = '✅ Copied!';
+            setTimeout(() => {
+              document.getElementById('copyKeyBtn').textContent = '📋 Copy';
+            }, 2000);
+          })
+          .catch(() => fallbackCopy(keyText));
+      } else {
+        fallbackCopy(keyText);
+      }
+    };
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
       try {
-        await fetch(API_BASE + '/playlists', {
+        document.execCommand('copy');
+        showFeedback('✅ Key copied to clipboard!', 'success', 'keyFeedback');
+        document.getElementById('copyKeyBtn').textContent = '✅ Copied!';
+        setTimeout(() => {
+          document.getElementById('copyKeyBtn').textContent = '📋 Copy';
+        }, 2000);
+      } catch (err) {
+        showFeedback('❌ Failed to copy', 'error', 'keyFeedback');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    // ----- Delete Functions -----
+    async function deletePlaylist(playlistId) {
+      if (!confirm('Delete this playlist?')) return;
+      try {
+        await apiCall('/playlists', {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ playlistId })
         });
         loadPlaylists();
@@ -314,13 +452,11 @@
       }
     }
 
-    // ----- Delete Chapter -----
     async function deleteChapter(playlistId, chapterId) {
       if (!confirm('Delete this chapter?')) return;
       try {
-        await fetch(API_BASE + '/playlists/chapter', {
+        await apiCall('/playlists/chapter', {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ playlistId, chapterId })
         });
         loadPlaylists();
@@ -330,13 +466,11 @@
       }
     }
 
-    // ----- Delete User -----
     async function deleteUser(userId) {
-      if (!confirm('Delete this user and all their keys?')) return;
+      if (!confirm('Delete this user?')) return;
       try {
-        await fetch(API_BASE + '/users', {
+        await apiCall('/users', {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId })
         });
         loadUsers();
@@ -422,8 +556,16 @@
 
     function updateApiStatus(mode) {
       const el = document.getElementById('apiStatus');
-      el.textContent = '🗄️ D1 Database ' + (mode === 'connected' ? '✅' : '');
-      if (mode === 'connected') el.classList.add('status-connected');
+      if (mode === 'connected') {
+        el.textContent = '✅ D1 Database Connected';
+        el.className = 'api-status status-connected';
+      } else if (mode === 'error') {
+        el.textContent = '❌ Connection Failed';
+        el.className = 'api-status status-error';
+      } else {
+        el.textContent = '🔄 Connecting...';
+        el.className = 'api-status';
+      }
     }
 
     function showFeedback(msg, type, elId) {
@@ -437,16 +579,21 @@
       setTimeout(() => { el.textContent = ''; el.className = 'toast-msg'; }, 5000);
     }
 
-    // ----- View Keys (Simple Alert) -----
+    // ----- View Keys -----
     window.viewKeys = async function(userId) {
       try {
-        const response = await fetch(API_BASE + '/keys?userId=' + userId);
-        const data = await response.json();
+        const data = await apiCall('/keys?userId=' + userId);
         if (data.success) {
           let msg = '🔑 Keys for this user:\n\n';
-          data.keys.forEach(k => {
-            msg += `Key: ${k.key_value}\nUsed: ${k.is_used ? '✅ Used' : '❌ Not used'}\nExpires: ${new Date(k.expires_at).toLocaleString()}\n\n`;
-          });
+          if (data.keys.length === 0) {
+            msg += 'No keys generated yet.';
+          } else {
+            data.keys.forEach(k => {
+              const status = k.is_used ? '✅ Used' : '❌ Not used';
+              const expires = new Date(k.expires_at).toLocaleString();
+              msg += `Key: ${k.key_value}\nStatus: ${status}\nExpires: ${expires}\n\n`;
+            });
+          }
           alert(msg);
         }
       } catch (error) {
@@ -487,10 +634,11 @@
       });
     }
 
-    // ----- Make functions globally accessible -----
+    // ----- Global Functions -----
     window.deletePlaylist = deletePlaylist;
     window.deleteChapter = deleteChapter;
     window.deleteUser = deleteUser;
+    window.copyKey = copyKey;
 
     // ----- Event Listeners -----
     document.getElementById('addPlaylistBtn').addEventListener('click', addPlaylist);
@@ -503,14 +651,13 @@
       showFeedback('🔄 Refreshed', 'info', 'playlistFeedback');
     });
 
-    // Enter key support
     document.getElementById('newPlaylistName').addEventListener('keydown', e => { if (e.key === 'Enter') addPlaylist(); });
     document.getElementById('chapterName').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
     document.getElementById('chapterLink').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
     document.getElementById('newUserEmail').addEventListener('keydown', e => { if (e.key === 'Enter') addUser(); });
 
     setupAuth();
-    console.log('✅ Admin panel loaded. Password: admin123');
+    console.log('✅ Admin panel loaded');
   })();
 </script>
 </body>
