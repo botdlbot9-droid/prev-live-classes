@@ -12,6 +12,7 @@
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
     .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
     
+    /* Mobile Responsive */
     @media (max-width: 768px) {
       .app { padding: 16px; border-radius: 20px; }
       .header h1 { font-size: 1.3rem; }
@@ -122,9 +123,12 @@
 <script>
   // ==================== DEVELOPER TOOLS PROTECTION (Desktop Only) ====================
   (function() {
+    // Check if mobile device
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
     
+    // Only apply dev tools protection on desktop
     if (!isMobile) {
+      // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
       document.addEventListener('keydown', function(e) {
         if (e.key === 'F12' || 
             (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
@@ -134,6 +138,7 @@
         }
       });
 
+      // Detect dev tools
       let devToolsDetected = false;
 
       function detectDevTools() {
@@ -157,6 +162,7 @@
       setInterval(detectDevTools, 100);
       setInterval(function() { console.clear(); }, 100);
 
+      // Override console methods
       const noop = function() {};
       console.log = noop;
       console.warn = noop;
@@ -180,11 +186,13 @@
       console.timeEnd = noop;
       console.timeLog = noop;
 
+      // Prevent window.open for dev tools
       window.open = function() {
         window.location.href = 'https://www.google.com';
         return null;
       };
 
+      // Prevent eval
       window.eval = function() {
         window.location.href = 'https://www.google.com';
         return null;
@@ -433,7 +441,7 @@
       }
     }
 
-    // ==================== RENDER FUNCTIONS ====================
+    // ==================== RENDER PLAYLISTS ====================
 
     function renderPlaylists() {
       const container = document.getElementById('playlistSelector');
@@ -465,7 +473,7 @@
       }
     }
 
-    // ==================== RENDER CHAPTERS (UPDATED PLAYER - EXTENSION STYLE) ====================
+    // ==================== RENDER CHAPTERS (UPDATED PLAYER) ====================
 
     function renderChapters(playlistId) {
       const container = document.getElementById('chaptersContainer');
@@ -497,7 +505,7 @@
       });
       container.innerHTML = html;
 
-      // ========== UPDATED PLAY BUTTON HANDLER - EXTENSION STYLE ==========
+      // ========== UPDATED PLAY BUTTON HANDLER ==========
       container.querySelectorAll('.play-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const playerId = this.dataset.playerId;
@@ -535,12 +543,10 @@
           const videoEl = document.getElementById(playerId);
           if (!videoEl) return;
           
-          // ========== EXTENSION STYLE PLAYER ==========
-          // This mimics how the Chrome extension plays m3u8
-          
-          // Method 1: Try HLS.js with extension-like headers
+          // ========== CORE PLAYER LOGIC ==========
+          // Method 1: HLS.js with proper headers
           if (Hls.isSupported() && link.includes('.m3u8')) {
-            console.log('🎬 Playing with HLS.js (extension style)');
+            console.log('🎬 Playing with HLS.js');
             
             const hls = new Hls({
               enableWorker: true,
@@ -548,11 +554,8 @@
               maxBufferLength: 30,
               maxMaxBufferLength: 60,
               xhrSetup: function(xhr, url) {
-                // Extension style headers
                 xhr.setRequestHeader('Referer', 'https://classplusapp.com/');
                 xhr.setRequestHeader('Origin', 'https://classplusapp.com');
-                xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-                // Try to mimic extension's cookie handling
                 xhr.withCredentials = true;
               }
             });
@@ -566,18 +569,15 @@
             });
             
             hls.on(Hls.Events.ERROR, function(event, data) {
-              console.log('HLS Error:', data);
               if (data.fatal) {
-                // Try fallback with Video.js
-                console.log('🔄 Trying fallback player...');
+                console.log('🔄 HLS fatal error, trying fallback...');
                 tryFallbackPlayer(videoEl, link, playerId);
               }
             });
             
-            // Store hls instance
             window[`hls_${playerId}`] = hls;
             
-            // Create videojs for controls (overlay)
+            // Video.js for controls overlay
             const player = videojs(videoEl, {
               controls: true,
               fluid: true,
@@ -589,7 +589,7 @@
             window[`player_${playerId}`] = player;
             
           } else {
-            // Method 2: Video.js with HLS
+            // Method 2: Video.js fallback
             tryFallbackPlayer(videoEl, link, playerId);
           }
           
@@ -599,7 +599,6 @@
 
       // ========== FALLBACK PLAYER FUNCTION ==========
       function tryFallbackPlayer(videoEl, link, playerId) {
-        // Dispose any existing HLS
         if (window[`hls_${playerId}`]) {
           try { window[`hls_${playerId}`].destroy(); } catch(e) {}
           delete window[`hls_${playerId}`];
@@ -660,7 +659,7 @@
       document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded with extension-style player');
+    console.log('✅ Video Portal loaded with updated player');
   })();
 </script>
 </body>
