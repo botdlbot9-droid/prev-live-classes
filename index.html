@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Portal · Cloudflare API</title>
+  <title>Video Portal</title>
   <!-- Video.js + HLS.js -->
   <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
   <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
@@ -12,143 +12,117 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
     .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
-    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e8edf6; padding-bottom: 18px; flex-wrap: wrap; gap: 12px; }
+    .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; }
     .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; letter-spacing: -0.3px; }
-    .admin-btn { background: #1a2b4c; color: white; border: none; border-radius: 60px; padding: 10px 28px; font-weight: 500; font-size: 0.95rem; cursor: pointer; transition: 0.15s; }
-    .admin-btn:hover { background: #2d3f62; transform: scale(1.01); }
-    .video-list { display: flex; flex-direction: column; gap: 28px; margin-top: 24px; }
+    .video-list { display: flex; flex-direction: column; gap: 28px; margin-top: 10px; }
     .video-item { background: #fafdff; border-radius: 24px; padding: 20px 24px 24px; border: 1px solid #e6edf6; transition: 0.15s; }
+    .video-item:hover { border-color: #c8d4e4; }
     .video-item .class-name { font-weight: 600; font-size: 1.3rem; color: #0b1a33; margin-bottom: 6px; }
     .play-btn { background: #0b1a33; color: white; border: none; border-radius: 40px; padding: 12px 32px; font-weight: 500; font-size: 1rem; cursor: pointer; margin: 12px 0 8px; transition: 0.15s; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
     .play-btn:hover { background: #1f3457; transform: scale(1.01); }
     .player-wrapper { margin-top: 14px; border-radius: 20px; overflow: hidden; background: #000; }
     .empty-state { color: #6a7c94; padding: 40px 0; text-align: center; font-style: italic; }
     .footer-note { color: #7c8aa0; font-size: 0.8rem; text-align: center; margin-top: 30px; border-top: 1px solid #eef2f6; padding-top: 22px; }
-    /* admin modal */
-    .admin-overlay { display: none; position: fixed; top:0;left:0;right:0;bottom:0; background: rgba(0,0,0,0.35); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-    .admin-overlay.active { display: flex; }
-    .admin-modal { background: white; max-width: 560px; width: 100%; border-radius: 36px; padding: 32px 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.15); animation: fadeUp 0.2s ease; }
-    @keyframes fadeUp { 0% { opacity:0; transform:translateY(20px); } 100% { opacity:1; transform:translateY(0); } }
-    .admin-modal h2 { font-weight: 600; color: #0b1a33; font-size: 1.6rem; display: flex; align-items: center; gap: 10px; }
-    .admin-modal .sub { color: #4c637f; margin-bottom: 20px; font-size: 0.95rem; }
-    .admin-modal label { font-weight: 500; color: #1a2b4c; display: block; margin-top: 16px; margin-bottom: 5px; font-size: 0.9rem; }
-    .admin-modal input { width: 100%; padding: 12px 16px; border: 1px solid #d9e1ec; border-radius: 20px; font-size: 0.95rem; background: #fafcff; }
-    .admin-modal input:focus { border-color: #1a2b4c; outline: none; background: white; }
-    .row-btns { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
-    .btn-primary { background: #1a2b4c; color: white; border: none; border-radius: 60px; padding: 12px 28px; font-weight: 500; cursor: pointer; flex:1; min-width:120px; transition:0.15s; }
-    .btn-primary:hover { background: #2f4370; }
-    .btn-outline { background: transparent; color: #1a2b4c; border: 1px solid #d0dae8; border-radius: 60px; padding: 12px 24px; font-weight: 500; cursor: pointer; }
-    .entry-list { background: #f5f8fe; border-radius: 20px; padding: 6px 0; margin: 16px 0 6px; max-height: 200px; overflow-y: auto; }
-    .entry-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid #e6edf6; font-size: 0.9rem; }
-    .entry-item:last-child { border-bottom: none; }
-    .entry-item .info { display: flex; flex-direction: column; gap: 2px; }
-    .entry-item .class-name { font-weight: 600; color: #0b1a33; }
-    .entry-item .link-preview { color: #4c637f; font-size: 0.75rem; word-break: break-all; max-width: 220px; }
-    .entry-item .del-btn { background: none; border: none; color: #b33a3a; font-size: 1.2rem; cursor: pointer; padding: 4px 10px; border-radius: 40px; }
-    .entry-item .del-btn:hover { background: #ffe6e6; }
-    .toast-msg { font-size: 0.9rem; margin-top: 12px; padding: 6px 0; color: #1a3f5c; }
-    .close-icon { margin-left: auto; background: none; border: none; font-size: 1.6rem; cursor: pointer; color: #6a7f9a; line-height: 1; }
-    .pwd-error { color: #b33a3a; font-size: 0.9rem; margin-top: 6px; }
-    .api-status { font-size: 0.8rem; color: #4c637f; margin-top: 8px; padding: 6px 12px; background: #eef3fa; border-radius: 40px; display: inline-block; }
+    .loading { text-align: center; padding: 40px; color: #4c637f; }
+    .error-msg { background: #fee; color: #b33a3a; padding: 12px 20px; border-radius: 12px; margin: 10px 0; }
   </style>
 </head>
 <body>
 <div class="app" id="app">
   <div class="header">
     <h1>📽️ Video Portal</h1>
-    <button class="admin-btn" id="openAdminBtn">🔐 Admin</button>
   </div>
-  <!-- user video list (only class name + play button, no link) -->
-  <div id="videoListContainer" class="video-list"></div>
+  <!-- user video list (only class name + play button, no link, no admin) -->
+  <div id="videoListContainer" class="video-list">
+    <div class="loading">Loading videos...</div>
+  </div>
   <div class="footer-note">⬇️ Click Play → video.js + hls.js player</div>
-</div>
-
-<!-- ADMIN OVERLAY (password protected) -->
-<div class="admin-overlay" id="adminOverlay">
-  <div class="admin-modal" id="adminModal">
-    <div style="display: flex; align-items: center;">
-      <h2>⚙️ Admin</h2>
-      <button class="close-icon" id="closeAdminBtn">✕</button>
-    </div>
-    <div class="sub">Manage classes & links · Cloudflare API ready</div>
-    <!-- password gate -->
-    <div id="passwordGate">
-      <label for="adminPwdInput">Enter password</label>
-      <input type="password" id="adminPwdInput" placeholder="••••••••" />
-      <div id="pwdError" class="pwd-error"></div>
-      <div class="row-btns">
-        <button class="btn-primary" id="unlockBtn">Unlock</button>
-        <button class="btn-outline" id="cancelPwdBtn">Cancel</button>
-      </div>
-    </div>
-    <!-- admin content (hidden until password correct) -->
-    <div id="adminContent" style="display: none;">
-      <label for="newClassName">Class name</label>
-      <input type="text" id="newClassName" placeholder="e.g. 'Tutorial 1'" />
-      <label for="newClassLink">Video URL (HLS / MP4)</label>
-      <input type="text" id="newClassLink" placeholder="https://example.com/stream.m3u8" />
-      <div class="row-btns">
-        <button class="btn-primary" id="saveClassBtn">➕ Add entry</button>
-        <button class="btn-outline" id="syncApiBtn" style="flex:0.6;">🔄 Sync</button>
-      </div>
-      <div id="adminFeedback" class="toast-msg"></div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
-        <label style="margin:0; font-weight:500;">Current entries</label>
-        <span class="api-status" id="apiStatus">🌐 API: local</span>
-      </div>
-      <div class="entry-list" id="adminList"></div>
-      <div style="margin-top: 6px; font-size:0.75rem; color:#4c637f;">🔁 data stored in localStorage + can sync with Cloudflare</div>
-    </div>
-  </div>
 </div>
 
 <script>
   (function() {
     // ---------- CONFIG ----------
     // Replace with your Cloudflare Worker / API endpoint
-    const API_BASE = 'https://your-cloudflare-worker.workers.dev/api/videos'; 
-    // For demo we keep local, but you can set API_BASE to your endpoint.
-    // The "Sync" button will attempt to POST/PUT your local data to Cloudflare.
-    // And on load you can fetch from API. We'll implement both.
-
+    const API_BASE = 'https://your-cloudflare-worker.workers.dev/api/videos';
     const STORAGE_KEY = 'videoClassData';
-    const ADMIN_PASSWORD = 'admin123';  // change as needed
 
     let videoItems = [];
-    let apiEnabled = false; // becomes true if API responds
 
     // ---------- DATA HELPERS ----------
-    function loadData() {
+    function loadFromStorage() {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        try { videoItems = JSON.parse(stored); if (!Array.isArray(videoItems)) videoItems = []; } catch(e) { videoItems = []; }
+        try { videoItems = JSON.parse(stored); if (!Array.isArray(videoItems)) videoItems = []; } 
+        catch(e) { videoItems = []; }
       } else {
+        // fallback demo data
         videoItems = [
           { id: 'demo1', className: 'Big Buck Bunny (HLS)', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
           { id: 'demo2', className: 'Sample MP4', link: 'https://www.w3schools.com/html/mov_bbb.mp4' }
         ];
-        saveData();
+        saveToStorage();
       }
     }
-    function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(videoItems));
-      updateApiStatus('local');
-    }
-    function genId() { return Date.now().toString(36) + Math.random().toString(36).substring(2,6); }
 
-    // ---------- RENDER USER LIST (no link shown) ----------
+    function saveToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(videoItems));
+    }
+
+    // ---------- FETCH FROM CLOUDFLARE API ----------
+    async function fetchFromCloudflare() {
+      const container = document.getElementById('videoListContainer');
+      try {
+        if (!API_BASE || API_BASE.includes('your-cloudflare')) {
+          // API not configured, use local storage
+          loadFromStorage();
+          renderUserList();
+          return;
+        }
+
+        const response = await fetch(API_BASE);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        
+        if (data.items && Array.isArray(data.items)) {
+          videoItems = data.items;
+          saveToStorage();
+          renderUserList();
+        } else {
+          // fallback to local
+          loadFromStorage();
+          renderUserList();
+        }
+      } catch (error) {
+        console.warn('Cloudflare fetch failed, using local data:', error);
+        loadFromStorage();
+        renderUserList();
+        // show error but still display content
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-msg';
+        errorDiv.textContent = '⚠️ Could not connect to server. Showing cached content.';
+        container.prepend(errorDiv);
+      }
+    }
+
+    // ---------- RENDER USER LIST (no link shown, no admin) ----------
     function renderUserList() {
       const container = document.getElementById('videoListContainer');
       if (!container) return;
+
+      // Remove any existing error messages from previous renders
+      const existingError = container.querySelector('.error-msg');
+      if (existingError) existingError.remove();
+
       if (!videoItems.length) {
-        container.innerHTML = `<div class="empty-state">📭 No videos yet. Admin can add.</div>`;
+        container.innerHTML = `<div class="empty-state">📭 No videos available.</div>`;
         return;
       }
+
       let html = '';
       videoItems.forEach(item => {
         const link = item.link || '#';
         const className = item.className || 'Untitled';
-        const playerId = `player-${item.id || genId()}`;
+        const playerId = `player-${item.id || Date.now().toString(36) + Math.random().toString(36).substring(2,6)}`;
         html += `
           <div class="video-item" data-id="${item.id}">
             <div class="class-name">📌 ${className}</div>
@@ -169,23 +143,41 @@
           const link = this.dataset.link;
           const wrapper = document.getElementById(`wrapper-${playerId}`);
           if (!wrapper) return;
+          
+          // Toggle visibility
+          if (wrapper.style.display === 'block') {
+            // If already visible, hide it (optional)
+            // wrapper.style.display = 'none';
+            // return;
+          }
           wrapper.style.display = 'block';
+          
+          // Dispose existing player
           if (window[`player_${playerId}`]) {
             try { window[`player_${playerId}`].dispose(); } catch(e) {}
             delete window[`player_${playerId}`];
           }
+
           const videoEl = document.getElementById(playerId);
           if (!videoEl) return;
+          
           const player = videojs(videoEl, {
             autoplay: true,
             controls: true,
             fluid: true,
             html5: {
-              hls: { enableLowInitialPlaylist: true, smoothQualityChange: true, overrideNative: true },
-              nativeAudioTracks: false, nativeVideoTracks: false,
+              hls: { 
+                enableLowInitialPlaylist: true, 
+                smoothQualityChange: true, 
+                overrideNative: true 
+              },
+              nativeAudioTracks: false, 
+              nativeVideoTracks: false,
             }
           });
           window[`player_${playerId}`] = player;
+          
+          // Set source based on URL type
           if (link.includes('.m3u8') || link.includes('m3u8')) {
             player.src({ src: link, type: 'application/x-mpegURL' });
           } else {
@@ -197,162 +189,7 @@
       });
     }
 
-    // ---------- RENDER ADMIN LIST ----------
-    function renderAdminList() {
-      const list = document.getElementById('adminList');
-      if (!list) return;
-      if (!videoItems.length) {
-        list.innerHTML = `<div style="padding:12px 16px; color:#6a7c94;">No entries</div>`;
-        return;
-      }
-      let html = '';
-      videoItems.forEach(item => {
-        const name = item.className || 'Unnamed';
-        const link = item.link || '';
-        html += `
-          <div class="entry-item">
-            <div class="info">
-              <span class="class-name">${name}</span>
-              <span class="link-preview">${link.length > 50 ? link.substring(0,50)+'…' : link}</span>
-            </div>
-            <button class="del-btn" data-id="${item.id}">✕</button>
-          </div>
-        `;
-      });
-      list.innerHTML = html;
-      list.querySelectorAll('.del-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const id = this.dataset.id;
-          if (!id) return;
-          if (confirm('Delete this class?')) {
-            videoItems = videoItems.filter(it => it.id !== id);
-            saveData();
-            renderAdminList();
-            renderUserList();
-            document.getElementById('adminFeedback').textContent = '🗑️ Deleted locally.';
-            updateApiStatus('local');
-          }
-        });
-      });
-    }
-
-    // ---------- ADMIN ACTIONS ----------
-    function setupAdminActions() {
-      document.getElementById('saveClassBtn').addEventListener('click', function() {
-        const name = document.getElementById('newClassName').value.trim();
-        const link = document.getElementById('newClassLink').value.trim();
-        const feedback = document.getElementById('adminFeedback');
-        if (!name || !link) { feedback.textContent = '⚠️ Please fill both fields.'; return; }
-        videoItems.push({ id: genId(), className: name, link: link });
-        saveData();
-        document.getElementById('newClassName').value = '';
-        document.getElementById('newClassLink').value = '';
-        feedback.textContent = `✅ Added "${name}" (local)`;
-        renderAdminList();
-        renderUserList();
-        updateApiStatus('local');
-      });
-    }
-
-    // ---------- CLOUDFLARE API SYNC ----------
-    async function syncWithCloudflare() {
-      const statusEl = document.getElementById('apiStatus');
-      const feedback = document.getElementById('adminFeedback');
-      if (!API_BASE || API_BASE.includes('your-cloudflare')) {
-        feedback.textContent = '⚠️ Set API_BASE to your Cloudflare Worker URL.';
-        return;
-      }
-      try {
-        statusEl.textContent = '🔄 Syncing...';
-        // PUT entire array to Cloudflare (or POST)
-        const response = await fetch(API_BASE, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: videoItems })
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const result = await response.json();
-        feedback.textContent = `✅ Synced with Cloudflare (${result.message || 'ok'})`;
-        statusEl.textContent = '🌐 API: connected';
-        apiEnabled = true;
-      } catch (err) {
-        feedback.textContent = `❌ Sync failed: ${err.message}`;
-        statusEl.textContent = '⚠️ API: error';
-        apiEnabled = false;
-      }
-    }
-
-    // load from Cloudflare on start (if API set)
-    async function fetchFromCloudflare() {
-      if (!API_BASE || API_BASE.includes('your-cloudflare')) return;
-      try {
-        const resp = await fetch(API_BASE);
-        if (!resp.ok) throw new Error('API not reachable');
-        const data = await resp.json();
-        if (data.items && Array.isArray(data.items)) {
-          videoItems = data.items;
-          saveData(); // store locally
-          renderUserList();
-          renderAdminList();
-          document.getElementById('apiStatus').textContent = '🌐 API: loaded from Cloudflare';
-          apiEnabled = true;
-        }
-      } catch (e) {
-        console.log('Cloudflare fetch failed, using local data');
-        document.getElementById('apiStatus').textContent = '🌐 API: local (fallback)';
-      }
-    }
-
-    function updateApiStatus(mode) {
-      const el = document.getElementById('apiStatus');
-      if (mode === 'local') el.textContent = '🌐 API: local';
-      else if (mode === 'cloud') el.textContent = '🌐 API: connected';
-    }
-
-    // ---------- ADMIN OVERLAY (password) ----------
-    function setupAdminOverlay() {
-      const overlay = document.getElementById('adminOverlay');
-      const openBtn = document.getElementById('openAdminBtn');
-      const closeBtn = document.getElementById('closeAdminBtn');
-      const cancelPwd = document.getElementById('cancelPwdBtn');
-      const unlockBtn = document.getElementById('unlockBtn');
-      const pwdInput = document.getElementById('adminPwdInput');
-      const pwdError = document.getElementById('pwdError');
-      const passwordGate = document.getElementById('passwordGate');
-      const adminContent = document.getElementById('adminContent');
-
-      function openAdmin() {
-        overlay.classList.add('active');
-        passwordGate.style.display = 'block';
-        adminContent.style.display = 'none';
-        pwdInput.value = '';
-        pwdError.textContent = '';
-        document.getElementById('adminFeedback').textContent = '';
-        renderAdminList();
-      }
-      openBtn.addEventListener('click', openAdmin);
-      function closeAdmin() { overlay.classList.remove('active'); }
-      closeBtn.addEventListener('click', closeAdmin);
-      cancelPwd.addEventListener('click', closeAdmin);
-      overlay.addEventListener('click', function(e) { if (e.target === overlay) closeAdmin(); });
-
-      unlockBtn.addEventListener('click', function() {
-        if (pwdInput.value === ADMIN_PASSWORD) {
-          passwordGate.style.display = 'none';
-          adminContent.style.display = 'block';
-          pwdError.textContent = '';
-          renderAdminList();
-        } else {
-          pwdError.textContent = '❌ Incorrect password.';
-        }
-      });
-      pwdInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') unlockBtn.click(); });
-
-      // Sync button
-      document.getElementById('syncApiBtn').addEventListener('click', syncWithCloudflare);
-    }
-
-    // ---------- DISPOSE PLAYERS ----------
+    // ---------- DISPOSE PLAYERS ON UNLOAD ----------
     window.addEventListener('beforeunload', function() {
       for (let key in window) {
         if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
@@ -362,21 +199,18 @@
     });
 
     // ---------- INIT ----------
-    loadData();
+    // First try to load from storage for immediate display
+    loadFromStorage();
     renderUserList();
-    renderAdminList();
-    setupAdminActions();
-    setupAdminOverlay();
-
-    // Try fetch from Cloudflare if API is configured
+    
+    // Then try to fetch fresh data from Cloudflare
     setTimeout(() => {
       if (API_BASE && !API_BASE.includes('your-cloudflare')) {
         fetchFromCloudflare();
       }
     }, 300);
 
-    console.log('✅ Video portal ready. Admin password: admin123');
-    console.log('🔗 To connect Cloudflare, set API_BASE and deploy a Worker with PUT/GET.');
+    console.log('✅ Video Portal loaded (user view - no admin)');
   })();
 </script>
 </body>
