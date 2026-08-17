@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Video Portal + Admin Panel</title>
+  <!-- Video.js + HLS.js -->
+  <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
+  <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      background: #f2f5f9;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 30px 20px;
+    }
+    .app {
+      max-width: 1100px;
+      width: 100%;
+      background: white;
+      border-radius: 32px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06);
+      padding: 30px;
+    }
+    /* header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #eaeef5;
+      padding-bottom: 18px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header h1 {
+      font-weight: 600;
+      font-size: 1.9rem;
+      color: #0b1a33;
+      letter-spacing: -0.3px;
+    }
+    .admin-btn {
+      background: #1a2b4c;
+      color: white;
+      border: none;
+      border-radius: 60px;
+      padding: 10px 28px;
+      font-weight: 500;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: 0.15s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.02);
+    }
+    .admin-btn:hover {
+      background: #2d3f62;
+      transform: scale(1.01);
+    }
+    /* admin panel overlay (modal) */
+    .admin-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .admin-overlay.active {
+      display: flex;
+    }
+    .admin-modal {
+      background: white;
+      max-width: 580px;
+      width: 100%;
+      border-radius: 36px;
+      padding: 32px 30px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+      animation: fadeUp 0.25s ease;
+    }
+    @keyframes fadeUp {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .admin-modal h2 {
+      font-weight: 600;
+      color: #0b1a33;
+      margin-bottom: 8px;
+      font-size: 1.6rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .admin-modal .sub {
+      color: #4c637f;
+      margin-bottom: 22px;
+      font-size: 0.95rem;
+    }
+    .admin-modal label {
+      font-weight: 500;
+      color: #1a2b4c;
+      display: block;
+      margin-top: 16px;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+    }
+    .admin-modal input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #d9e1ec;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      background: #fafcff;
+      transition: 0.1s;
+    }
+    .admin-modal input:focus {
+      border-color: #1a2b4c;
+      outline: none;
+      background: white;
+    }
+    .admin-modal .row-btns {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    .admin-modal .btn-primary {
+      background: #1a2b4c;
+      color: white;
+      border: none;
+      border-radius: 60px;
+      padding: 12px 28px;
+      font-weight: 500;
+      cursor: pointer;
+      flex: 1;
+      min-width: 120px;
+      transition: 0.15s;
+    }
+    .admin-modal .btn-primary:hover {
+      background: #2f4370;
+    }
+    .admin-modal .btn-outline {
+      background: transparent;
+      color: #1a2b4c;
+      border: 1px solid #d0dae8;
+      border-radius: 60px;
+      padding: 12px 24px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .admin-modal .btn-outline:hover {
+      background: #f0f4fe;
+    }
+    .admin-modal .entry-list {
+      background: #f5f8fe;
+      border-radius: 20px;
+      padding: 8px 0;
+      margin: 18px 0 6px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .entry-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid #e6edf6;
+      font-size: 0.9rem;
+    }
+    .entry-item:last-child { border-bottom: none; }
+    .entry-item .info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .entry-item .class-name {
+      font-weight: 600;
+      color: #0b1a33;
+    }
+    .entry-item .link-preview {
+      color: #4c637f;
+      font-size: 0.8rem;
+      word-break: break-all;
+      max-width: 220px;
+    }
+    .entry-item .del-btn {
+      background: none;
+      border: none;
+      color: #b33a3a;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 40px;
+      transition: 0.1s;
+    }
+    .entry-item .del-btn:hover {
+      background: #ffe6e6;
+    }
+    .toast-msg {
+      font-size: 0.9rem;
+      margin-top: 14px;
+      padding: 8px 16px;
+      border-radius: 60px;
+      background: #e6f0fa;
+      color: #1a3f5c;
+      display: inline-block;
+    }
+    .admin-modal .close-icon {
+      margin-left: auto;
+      background: none;
+      border: none;
+      font-size: 1.6rem;
+      cursor: pointer;
+      color: #6a7f9a;
+      line-height: 1;
+    }
+    /* user video list */
+    .video-list {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      margin-top: 10px;
+    }
+    .video-item {
+      background: #fafdff;
+      border-radius: 24px;
+      padding: 20px 24px 24px;
+      border: 1px solid #e6edf6;
+      transition: 0.15s;
+    }
+    .video-item .class-name {
+      font-weight: 600;
+      font-size: 1.25rem;
+      color: #0b1a33;
+      margin-bottom: 6px;
+    }
+    .play-btn {
+      background: #0b1a33;
+      color: white;
+      border: none;
+      border-radius: 40px;
+      padding: 10px 26px;
+      font-weight: 500;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 10px 0 12px;
+      transition: 0.15s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .play-btn:hover {
+      background: #1f3457;
+      transform: scale(1.01);
+    }
+    .link-area {
+      background: #f1f6fe;
+      border-radius: 40px;
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      color: #1f3a6b;
+      word-break: break-all;
+      border: 1px solid #dae2f0;
+      display: inline-block;
+      max-width: 100%;
+    }
+    .link-area a {
+      color: #0b1a33;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .link-area a:hover { text-decoration: underline; }
+    .player-wrapper {
+      margin-top: 14px;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #000;
+    }
+    .empty-state {
+      color: #6a7c94;
+      padding: 40px 0;
+      text-align: center;
+      font-style: italic;
+    }
+    .footer-note {
+      color: #7c8aa0;
+      font-size: 0.8rem;
+      text-align: center;
+      margin-top: 30px;
+      border-top: 1px solid #eef2f6;
+      padding-top: 22px;
+    }
+    .pwd-error {
+      color: #b33a3a;
+      font-size: 0.9rem;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- header -->
+  <div class="header">
+    <h1>📽️ Video Portal</h1>
+    <button class="admin-btn" id="openAdminBtn">🔐 Admin</button>
+  </div>
+
+  <!-- user video list -->
+  <div id="videoListContainer" class="video-list"></div>
+  <div class="footer-note">⬇️ Click Play → video.js + hls.js player</div>
+</div>
+
+<!-- ADMIN OVERLAY (separate, password protected) -->
+<div class="admin-overlay" id="adminOverlay">
+  <div class="admin-modal" id="adminModal">
+    <div style="display: flex; align-items: center;">
+      <h2>⚙️ Admin</h2>
+      <button class="close-icon" id="closeAdminBtn">✕</button>
+    </div>
+    <div class="sub">Manage classes &amp; video links</div>
+
+    <!-- password gate -->
+    <div id="passwordGate">
+      <label for="adminPwdInput">Enter password</label>
+      <input type="password" id="adminPwdInput" placeholder="••••••••" />
+      <div id="pwdError" class="pwd-error"></div>
+      <div class="row-btns">
+        <button class="btn-primary" id="unlockBtn">Unlock</button>
+        <button class="btn-outline" id="cancelPwdBtn">Cancel</button>
+      </div>
+    </div>
+
+    <!-- admin content (hidden until password correct) -->
+    <div id="adminContent" style="display: none;">
+      <label for="newClassName">Class name</label>
+      <input type="text" id="newClassName" placeholder="e.g. 'Intro to HLS'" />
+      <label for="newClassLink">Video URL (HLS / MP4)</label>
+      <input type="text" id="newClassLink" placeholder="https://example.com/stream.m3u8" />
+      <div class="row-btns">
+        <button class="btn-primary" id="saveClassBtn">➕ Add entry</button>
+      </div>
+      <div id="adminFeedback" class="toast-msg" style="background:transparent; padding-left:0;"></div>
+
+      <label style="margin-top:18px;">Current entries</label>
+      <div class="entry-list" id="adminList"></div>
+      <div style="margin-top: 8px; font-size:0.8rem; color:#4c637f;">🔄 stored in localStorage</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ----- constants -----
+    const STORAGE_KEY = 'videoClassData';
+    const ADMIN_PASSWORD = 'admin123';  // you can change this
+
+    let videoItems = [];
+
+    // ----- data helpers -----
+    function loadData() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          videoItems = JSON.parse(stored);
+          if (!Array.isArray(videoItems)) videoItems = [];
+        } catch (e) { videoItems = []; }
+      } else {
+        // seed demo
+        videoItems = [
+          { id: 'demo1', className: 'Big Buck Bunny (HLS)', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
+          { id: 'demo2', className: 'Sample MP4', link: 'https://www.w3schools.com/html/mov_bbb.mp4' }
+        ];
+        saveData();
+      }
+    }
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(videoItems));
+    }
+    function genId() { return Date.now().toString(36) + Math.random().toString(36).substring(2,6); }
+
+    // ----- render user list -----
+    function renderUserList() {
+      const container = document.getElementById('videoListContainer');
+      if (!container) return;
+      if (!videoItems.length) {
+        container.innerHTML = `<div class="empty-state">📭 No videos yet. Admin can add.</div>`;
+        return;
+      }
+      let html = '';
+      videoItems.forEach(item => {
+        const link = item.link || '#';
+        const className = item.className || 'Untitled';
+        const playerId = `player-${item.id || genId()}`;
+        html += `
+          <div class="video-item" data-id="${item.id}">
+            <div class="class-name">📌 ${className}</div>
+            <button class="play-btn" data-player-id="${playerId}" data-link="${link}" data-class="${className}">▶ Play</button>
+            <div class="link-area">🔗 <a href="${link}" target="_blank">${link.length > 60 ? link.substring(0,60)+'…' : link}</a></div>
+            <div class="player-wrapper" id="wrapper-${playerId}" style="display: none;">
+              <video id="${playerId}" class="video-js vjs-default-skin" controls preload="auto" width="100%" height="auto"></video>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+
+      // play button delegation
+      container.querySelectorAll('.play-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const playerId = this.dataset.playerId;
+          const link = this.dataset.link;
+          const wrapper = document.getElementById(`wrapper-${playerId}`);
+          if (!wrapper) return;
+          wrapper.style.display = 'block';
+
+          // dispose existing
+          if (window[`player_${playerId}`]) {
+            try { window[`player_${playerId}`].dispose(); } catch(e) {}
+            delete window[`player_${playerId}`];
+          }
+
+          const videoEl = document.getElementById(playerId);
+          if (!videoEl) return;
+          const player = videojs(videoEl, {
+            autoplay: true,
+            controls: true,
+            fluid: true,
+            html5: {
+              hls: {
+                enableLowInitialPlaylist: true,
+                smoothQualityChange: true,
+                overrideNative: true,
+              },
+              nativeAudioTracks: false,
+              nativeVideoTracks: false,
+            }
+          }, function() { console.log('Player ready'); });
+          window[`player_${playerId}`] = player;
+
+          // set source
+          if (link.includes('.m3u8') || link.includes('m3u8')) {
+            player.src({ src: link, type: 'application/x-mpegURL' });
+          } else {
+            player.src({ src: link, type: 'video/mp4' });
+          }
+          player.play();
+          wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      });
+    }
+
+    // ----- render admin entry list -----
+    function renderAdminList() {
+      const list = document.getElementById('adminList');
+      if (!list) return;
+      if (!videoItems.length) {
+        list.innerHTML = `<div style="padding:12px 16px; color:#6a7c94;">No entries</div>`;
+        return;
+      }
+      let html = '';
+      videoItems.forEach(item => {
+        const name = item.className || 'Unnamed';
+        const link = item.link || '';
+        html += `
+          <div class="entry-item">
+            <div class="info">
+              <span class="class-name">${name}</span>
+              <span class="link-preview">${link.length > 50 ? link.substring(0,50)+'…' : link}</span>
+            </div>
+            <button class="del-btn" data-id="${item.id}">✕</button>
+          </div>
+        `;
+      });
+      list.innerHTML = html;
+      // delete
+      list.querySelectorAll('.del-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.dataset.id;
+          if (!id) return;
+          if (confirm('Delete this class?')) {
+            videoItems = videoItems.filter(it => it.id !== id);
+            saveData();
+            renderAdminList();
+            renderUserList();
+            document.getElementById('adminFeedback').textContent = '🗑️ Deleted.';
+          }
+        });
+      });
+    }
+
+    // ----- admin: add new -----
+    function setupAdminActions() {
+      document.getElementById('saveClassBtn').addEventListener('click', function() {
+        const name = document.getElementById('newClassName').value.trim();
+        const link = document.getElementById('newClassLink').value.trim();
+        const feedback = document.getElementById('adminFeedback');
+        if (!name || !link) {
+          feedback.textContent = '⚠️ Please fill both fields.';
+          return;
+        }
+        videoItems.push({ id: genId(), className: name, link: link });
+        saveData();
+        document.getElementById('newClassName').value = '';
+        document.getElementById('newClassLink').value = '';
+        feedback.textContent = `✅ Added "${name}"`;
+        renderAdminList();
+        renderUserList();
+      });
+    }
+
+    // ----- Admin overlay, password protection -----
+    function setupAdminOverlay() {
+      const overlay = document.getElementById('adminOverlay');
+      const openBtn = document.getElementById('openAdminBtn');
+      const closeBtn = document.getElementById('closeAdminBtn');
+      const cancelPwd = document.getElementById('cancelPwdBtn');
+      const unlockBtn = document.getElementById('unlockBtn');
+      const pwdInput = document.getElementById('adminPwdInput');
+      const pwdError = document.getElementById('pwdError');
+      const passwordGate = document.getElementById('passwordGate');
+      const adminContent = document.getElementById('adminContent');
+
+      // open overlay: reset to password gate, hide content
+      function openAdmin() {
+        overlay.classList.add('active');
+        passwordGate.style.display = 'block';
+        adminContent.style.display = 'none';
+        pwdInput.value = '';
+        pwdError.textContent = '';
+        document.getElementById('adminFeedback').textContent = '';
+        renderAdminList(); // refresh list
+      }
+
+      openBtn.addEventListener('click', openAdmin);
+
+      function closeAdmin() {
+        overlay.classList.remove('active');
+      }
+      closeBtn.addEventListener('click', closeAdmin);
+      cancelPwd.addEventListener('click', closeAdmin);
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) closeAdmin();
+      });
+
+      // unlock
+      unlockBtn.addEventListener('click', function() {
+        const entered = pwdInput.value;
+        if (entered === ADMIN_PASSWORD) {
+          passwordGate.style.display = 'none';
+          adminContent.style.display = 'block';
+          pwdError.textContent = '';
+          renderAdminList();
+        } else {
+          pwdError.textContent = '❌ Incorrect password.';
+        }
+      });
+
+      // enter key on password input
+      pwdInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') unlockBtn.click();
+      });
+    }
+
+    // dispose players on page unload
+    window.addEventListener('beforeunload', function() {
+      for (let key in window) {
+        if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
+          try { window[key].dispose(); } catch(e) {}
+        }
+      }
+    });
+
+    // ----- INIT -----
+    loadData();
+    renderUserList();
+    renderAdminList();
+    setupAdminActions();
+    setupAdminOverlay();
+
+    console.log('✅ Portal ready. Admin password: admin123');
+  })();
+</script>
+</body>
+</html>
