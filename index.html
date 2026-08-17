@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Video Portal - Playlists</title>
-  <!-- Video.js + HLS.js -->
   <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
   <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js"></script>
@@ -13,16 +12,12 @@
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
     .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
     .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; }
-    .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; letter-spacing: -0.3px; }
-    
-    /* Playlist selector */
+    .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; }
     .playlist-selector { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; padding: 16px; background: #f8faff; border-radius: 20px; }
     .playlist-btn { padding: 10px 24px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; color: #1a2b4c; font-weight: 500; cursor: pointer; transition: 0.15s; font-size: 0.95rem; }
     .playlist-btn:hover { border-color: #1a2b4c; background: #f0f4fe; }
     .playlist-btn.active { border-color: #1a2b4c; background: #1a2b4c; color: white; }
-    
-    .chapters-container { margin-top: 10px; }
-    .chapter-item { background: #fafdff; border-radius: 20px; padding: 16px 22px; margin-bottom: 14px; border: 1px solid #e6edf6; transition: 0.15s; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .chapter-item { background: #fafdff; border-radius: 20px; padding: 16px 22px; margin-bottom: 14px; border: 1px solid #e6edf6; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     .chapter-item:hover { border-color: #c8d4e4; }
     .chapter-number { font-weight: 700; color: #1a2b4c; font-size: 1.1rem; min-width: 80px; }
     .chapter-name { font-weight: 600; font-size: 1.1rem; color: #0b1a33; flex: 1; }
@@ -30,25 +25,25 @@
     .play-btn:hover { background: #1f3457; transform: scale(1.02); }
     .player-wrapper { width: 100%; margin-top: 12px; border-radius: 16px; overflow: hidden; background: #000; }
     .empty-state { color: #6a7c94; padding: 40px 0; text-align: center; font-style: italic; }
-    .footer-note { color: #7c8aa0; font-size: 0.8rem; text-align: center; margin-top: 30px; border-top: 1px solid #eef2f6; padding-top: 22px; }
     .playlist-title { font-size: 1.4rem; font-weight: 600; color: #0b1a33; margin-bottom: 16px; }
+    .footer-note { color: #7c8aa0; font-size: 0.8rem; text-align: center; margin-top: 30px; border-top: 1px solid #eef2f6; padding-top: 22px; }
     .loading { text-align: center; padding: 40px; color: #4c637f; }
-    .error-msg { background: #fee; color: #b33a3a; padding: 12px 20px; border-radius: 12px; margin: 10px 0; }
+    .status-bar { font-size: 0.8rem; color: #4c637f; padding: 8px 16px; background: #f0f4fb; border-radius: 40px; display: inline-block; margin-bottom: 16px; }
   </style>
 </head>
 <body>
-<div class="app" id="app">
+<div class="app">
   <div class="header">
     <h1>📽️ Video Portal</h1>
   </div>
   
-  <!-- Playlist selector -->
+  <div id="statusBar" class="status-bar">🔄 Loading...</div>
+  
   <div id="playlistSelector" class="playlist-selector">
     <div class="loading">Loading playlists...</div>
   </div>
   
-  <!-- Chapters display -->
-  <div id="chaptersContainer" class="chapters-container">
+  <div id="chaptersContainer">
     <div class="empty-state">Select a playlist to view chapters</div>
   </div>
   
@@ -57,43 +52,45 @@
 
 <script>
   (function() {
-    // ---------- CONFIG ----------
-    const API_BASE = 'https://your-cloudflare-worker.workers.dev/api/playlists';
+    // ----- CONFIG -----
+    const API_BASE = 'https://video-api.your-subdomain.workers.dev/api/playlists';
     const STORAGE_KEY = 'playlistData';
 
     let playlists = [];
     let currentPlaylistId = null;
 
-    // ---------- DATA HELPERS ----------
+    // ----- Load from localStorage -----
     function loadFromStorage() {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try { 
-          playlists = JSON.parse(stored); 
-          if (!Array.isArray(playlists)) playlists = []; 
-        } catch(e) { playlists = []; }
-      } else {
-        // Demo data - Trigonometry with chapters
-        playlists = [
-          {
-            id: 'trigonometry',
-            name: 'Trigonometry',
-            chapters: [
-              { id: 'ch1', name: 'Chapter 1: Introduction to Trigonometry', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
-              { id: 'ch2', name: 'Chapter 2: Trigonometric Ratios', link: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-              { id: 'ch3', name: 'Chapter 3: Trigonometric Identities', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
-            ]
-          },
-          {
-            id: 'algebra',
-            name: 'Algebra',
-            chapters: [
-              { id: 'al1', name: 'Chapter 1: Linear Equations', link: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-              { id: 'al2', name: 'Chapter 2: Quadratic Equations', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
-            ]
-          }
-        ];
-        saveToStorage();
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          playlists = JSON.parse(stored);
+          if (!Array.isArray(playlists)) playlists = [];
+        } else {
+          // Demo data
+          playlists = [
+            {
+              id: 'pl_demo1',
+              name: 'Trigonometry',
+              chapters: [
+                { id: 'ch1', name: 'Chapter 1: Introduction to Trigonometry', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
+                { id: 'ch2', name: 'Chapter 2: Trigonometric Ratios', link: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+                { id: 'ch3', name: 'Chapter 3: Trigonometric Identities', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
+              ]
+            },
+            {
+              id: 'pl_demo2',
+              name: 'Algebra',
+              chapters: [
+                { id: 'al1', name: 'Chapter 1: Linear Equations', link: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+                { id: 'al2', name: 'Chapter 2: Quadratic Equations', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
+              ]
+            }
+          ];
+          saveToStorage();
+        }
+      } catch (e) {
+        playlists = [];
       }
     }
 
@@ -101,42 +98,39 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists));
     }
 
-    function genId() { return Date.now().toString(36) + Math.random().toString(36).substring(2,6); }
-
-    // ---------- FETCH FROM CLOUDFLARE API ----------
+    // ----- Fetch from Cloudflare API -----
     async function fetchFromCloudflare() {
-      const container = document.getElementById('playlistSelector');
+      const statusBar = document.getElementById('statusBar');
       try {
-        if (!API_BASE || API_BASE.includes('your-cloudflare')) {
-          loadFromStorage();
-          renderPlaylists();
-          return;
-        }
-
+        statusBar.textContent = '🔄 Syncing with Cloudflare...';
+        
         const response = await fetch(API_BASE);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
         const data = await response.json();
         
-        if (data.playlists && Array.isArray(data.playlists)) {
+        if (data.success && data.playlists && Array.isArray(data.playlists)) {
           playlists = data.playlists;
           saveToStorage();
-          renderPlaylists();
+          statusBar.textContent = '✅ Connected to Cloudflare';
+          statusBar.style.background = '#e6f5e6';
+          statusBar.style.color = '#1a5d3c';
         } else {
-          loadFromStorage();
-          renderPlaylists();
+          throw new Error('Invalid data format');
         }
       } catch (error) {
         console.warn('Cloudflare fetch failed, using local data:', error);
+        statusBar.textContent = '⚠️ Using local storage (Cloudflare unavailable)';
+        statusBar.style.background = '#fee';
+        statusBar.style.color = '#b33a3a';
         loadFromStorage();
-        renderPlaylists();
       }
+      renderPlaylists();
     }
 
-    // ---------- RENDER PLAYLISTS ----------
+    // ----- Render Playlists -----
     function renderPlaylists() {
       const container = document.getElementById('playlistSelector');
-      if (!container) return;
-
       if (!playlists.length) {
         container.innerHTML = `<div class="empty-state">No playlists available.</div>`;
         document.getElementById('chaptersContainer').innerHTML = `<div class="empty-state">No playlists available</div>`;
@@ -150,17 +144,14 @@
       });
       container.innerHTML = html;
 
-      // Add click events
       container.querySelectorAll('.playlist-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-          const id = this.dataset.id;
-          currentPlaylistId = id;
-          renderPlaylists(); // re-render to update active state
-          renderChapters(id);
+          currentPlaylistId = this.dataset.id;
+          renderPlaylists();
+          renderChapters(currentPlaylistId);
         });
       });
 
-      // Auto-select first playlist if none selected
       if (!currentPlaylistId && playlists.length > 0) {
         currentPlaylistId = playlists[0].id;
         renderPlaylists();
@@ -170,12 +161,11 @@
       }
     }
 
-    // ---------- RENDER CHAPTERS ----------
+    // ----- Render Chapters -----
     function renderChapters(playlistId) {
       const container = document.getElementById('chaptersContainer');
-      if (!container) return;
-
       const playlist = playlists.find(p => p.id === playlistId);
+      
       if (!playlist) {
         container.innerHTML = `<div class="empty-state">Playlist not found</div>`;
         return;
@@ -188,7 +178,7 @@
 
       let html = `<div class="playlist-title">📚 ${playlist.name}</div>`;
       playlist.chapters.forEach((chapter, index) => {
-        const playerId = `player-${chapter.id || genId()}`;
+        const playerId = `player-${chapter.id || 'ch_' + Date.now()}`;
         html += `
           <div class="chapter-item" data-id="${chapter.id}">
             <span class="chapter-number">Chapter ${index + 1}</span>
@@ -207,14 +197,11 @@
         btn.addEventListener('click', function() {
           const playerId = this.dataset.playerId;
           const link = this.dataset.link;
-          const chapterName = this.dataset.chapter;
           const wrapper = document.getElementById(`wrapper-${playerId}`);
           if (!wrapper) return;
           
-          // Toggle visibility
           if (wrapper.style.display === 'block') {
             wrapper.style.display = 'none';
-            // Dispose player if hiding
             if (window[`player_${playerId}`]) {
               try { window[`player_${playerId}`].dispose(); } catch(e) {}
               delete window[`player_${playerId}`];
@@ -224,7 +211,6 @@
           
           wrapper.style.display = 'block';
           
-          // Dispose existing player
           if (window[`player_${playerId}`]) {
             try { window[`player_${playerId}`].dispose(); } catch(e) {}
             delete window[`player_${playerId}`];
@@ -238,19 +224,13 @@
             controls: true,
             fluid: true,
             html5: {
-              hls: { 
-                enableLowInitialPlaylist: true, 
-                smoothQualityChange: true, 
-                overrideNative: true 
-              },
-              nativeAudioTracks: false, 
-              nativeVideoTracks: false,
+              hls: { enableLowInitialPlaylist: true, smoothQualityChange: true, overrideNative: true },
+              nativeAudioTracks: false, nativeVideoTracks: false,
             }
           });
           window[`player_${playerId}`] = player;
           
-          // Set source based on URL type
-          if (link.includes('.m3u8') || link.includes('m3u8')) {
+          if (link.includes('.m3u8')) {
             player.src({ src: link, type: 'application/x-mpegURL' });
           } else {
             player.src({ src: link, type: 'video/mp4' });
@@ -261,7 +241,14 @@
       });
     }
 
-    // ---------- DISPOSE PLAYERS ON UNLOAD ----------
+    // ----- Init -----
+    loadFromStorage();
+    renderPlaylists();
+    
+    // Try to fetch from Cloudflare
+    setTimeout(fetchFromCloudflare, 500);
+
+    // Dispose players on unload
     window.addEventListener('beforeunload', function() {
       for (let key in window) {
         if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
@@ -270,18 +257,7 @@
       }
     });
 
-    // ---------- INIT ----------
-    loadFromStorage();
-    renderPlaylists();
-    
-    // Try to fetch fresh data from Cloudflare
-    setTimeout(() => {
-      if (API_BASE && !API_BASE.includes('your-cloudflare')) {
-        fetchFromCloudflare();
-      }
-    }, 300);
-
-    console.log('✅ Video Portal loaded (playlist view)');
+    console.log('✅ Video Portal loaded');
   })();
 </script>
 </body>
