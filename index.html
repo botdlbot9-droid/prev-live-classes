@@ -14,29 +14,35 @@
     .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
     .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; }
     
-    /* Login Form */
     .login-container { max-width: 450px; margin: 40px auto; padding: 30px; background: #f8faff; border-radius: 24px; border: 1px solid #e6edf6; }
     .login-container h2 { margin-bottom: 20px; color: #0b1a33; }
     .login-container input { width: 100%; padding: 12px 16px; border: 1px solid #d9e1ec; border-radius: 16px; font-size: 0.95rem; margin-bottom: 12px; }
     .login-container button { width: 100%; padding: 12px; background: #0b1a33; color: white; border: none; border-radius: 16px; font-weight: 600; cursor: pointer; }
     .login-container .error { color: #b33a3a; font-size: 0.9rem; margin-top: 8px; }
+    .login-container .success { color: #1a7a3a; font-size: 0.9rem; margin-top: 8px; }
     
     .playlist-selector { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; padding: 16px; background: #f8faff; border-radius: 20px; }
     .playlist-btn { padding: 10px 24px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; color: #1a2b4c; font-weight: 500; cursor: pointer; transition: 0.15s; }
     .playlist-btn:hover { border-color: #1a2b4c; background: #f0f4fe; }
     .playlist-btn.active { border-color: #1a2b4c; background: #1a2b4c; color: white; }
+    
     .chapter-item { background: #fafdff; border-radius: 20px; padding: 16px 22px; margin-bottom: 14px; border: 1px solid #e6edf6; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .chapter-item:hover { border-color: #c8d4e4; }
     .chapter-number { font-weight: 700; color: #1a2b4c; font-size: 1.1rem; min-width: 80px; }
     .chapter-name { font-weight: 600; font-size: 1.1rem; color: #0b1a33; flex: 1; }
     .play-btn { background: #0b1a33; color: white; border: none; border-radius: 40px; padding: 8px 24px; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: 0.15s; }
     .play-btn:hover { background: #1f3457; }
     .player-wrapper { width: 100%; margin-top: 12px; border-radius: 16px; overflow: hidden; background: #000; }
+    
     .empty-state { color: #6a7c94; padding: 40px 0; text-align: center; font-style: italic; }
     .playlist-title { font-size: 1.4rem; font-weight: 600; color: #0b1a33; margin-bottom: 16px; }
     .status-bar { font-size: 0.8rem; padding: 8px 16px; border-radius: 40px; display: inline-block; margin-bottom: 16px; background: #f0f4fb; color: #4c637f; }
-    .user-info { font-size: 0.85rem; color: #4c637f; }
+    .user-info { font-size: 0.85rem; color: #4c637f; display: flex; align-items: center; gap: 12px; }
     .logout-btn { background: none; border: 1px solid #d9e1ec; padding: 6px 16px; border-radius: 40px; cursor: pointer; }
     .logout-btn:hover { background: #fee; border-color: #b33a3a; }
+    .session-timer { font-size: 0.75rem; color: #1a7a3a; background: #e6f5e6; padding: 4px 12px; border-radius: 40px; }
+    
+    .footer-note { color: #7c8aa0; font-size: 0.8rem; text-align: center; margin-top: 30px; border-top: 1px solid #eef2f6; padding-top: 22px; }
   </style>
 </head>
 <body>
@@ -49,16 +55,20 @@
   <!-- Login Form -->
   <div id="loginContainer" class="login-container">
     <h2>🔐 Login to Access Videos</h2>
-    <p style="color:#4c637f; margin-bottom:16px;">Enter your email and access key</p>
+    <p style="color:#4c637f; margin-bottom:16px;">Enter your email and access key (valid for 24 hours)</p>
     <input type="email" id="loginEmail" placeholder="Enter your email" />
     <input type="text" id="loginKey" placeholder="Enter your access key" />
     <button id="loginBtn">Login</button>
     <div id="loginError" class="error"></div>
+    <div id="loginSuccess" class="success"></div>
   </div>
 
   <!-- Video Content (hidden until login) -->
   <div id="videoContent" style="display: none;">
-    <div id="statusBar" class="status-bar">🔄 Loading videos...</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+      <div id="statusBar" class="status-bar">🔄 Loading videos...</div>
+      <div id="sessionTimer" class="session-timer">⏰ Session: 24:00:00</div>
+    </div>
     <div id="playlistSelector" class="playlist-selector">
       <div class="empty-state">Loading playlists...</div>
     </div>
@@ -67,23 +77,118 @@
     </div>
   </div>
   
-  <div class="footer-note" style="color:#7c8aa0; font-size:0.8rem; text-align:center; margin-top:30px; border-top:1px solid #eef2f6; padding-top:22px;">
-    ⬇️ Click Play on any chapter → video.js + hls.js player
-  </div>
+  <div class="footer-note">⬇️ Click Play on any chapter → video.js + hls.js player</div>
 </div>
 
 <script>
   (function() {
     const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
+    const SESSION_KEY = 'video_portal_session';
+    const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
     let playlists = [];
     let currentPlaylistId = null;
     let currentUser = null;
+    let sessionTimer = null;
+    let timerInterval = null;
 
-    // ----- Login -----
+    // ==================== SESSION MANAGEMENT ====================
+
+    function saveSession(user, key) {
+      const session = {
+        user: user,
+        key: key,
+        loginTime: Date.now(),
+        expiresAt: Date.now() + SESSION_DURATION
+      };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      return session;
+    }
+
+    function getSession() {
+      try {
+        const data = localStorage.getItem(SESSION_KEY);
+        if (!data) return null;
+        const session = JSON.parse(data);
+        
+        // Check if session expired
+        if (Date.now() > session.expiresAt) {
+          localStorage.removeItem(SESSION_KEY);
+          return null;
+        }
+        
+        return session;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function clearSession() {
+      localStorage.removeItem(SESSION_KEY);
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function isSessionValid() {
+      const session = getSession();
+      if (!session) return false;
+      return Date.now() < session.expiresAt;
+    }
+
+    // ==================== SESSION TIMER ====================
+
+    function startSessionTimer(expiresAt) {
+      if (timerInterval) clearInterval(timerInterval);
+      
+      const timerEl = document.getElementById('sessionTimer');
+      if (!timerEl) return;
+
+      timerInterval = setInterval(() => {
+        const now = Date.now();
+        const remaining = expiresAt - now;
+        
+        if (remaining <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          timerEl.textContent = '⏰ Session Expired!';
+          timerEl.style.background = '#fee';
+          timerEl.style.color = '#b33a3a';
+          // Auto logout
+          setTimeout(() => {
+            logout();
+          }, 3000);
+          return;
+        }
+
+        const hours = Math.floor(remaining / (1000 * 60 * 60));
+        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+        
+        timerEl.textContent = `⏰ Session: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        
+        // Change color when less than 1 hour
+        if (remaining < 60 * 60 * 1000) {
+          timerEl.style.background = '#fff3cd';
+          timerEl.style.color = '#856404';
+        } else {
+          timerEl.style.background = '#e6f5e6';
+          timerEl.style.color = '#1a5d3c';
+        }
+      }, 1000);
+    }
+
+    // ==================== LOGIN ====================
+
     async function login() {
       const email = document.getElementById('loginEmail').value.trim();
       const key = document.getElementById('loginKey').value.trim();
       const errorEl = document.getElementById('loginError');
+      const successEl = document.getElementById('loginSuccess');
+
+      errorEl.textContent = '';
+      successEl.textContent = '';
 
       if (!email || !key) {
         errorEl.textContent = '⚠️ Please enter both email and key';
@@ -101,12 +206,24 @@
 
         if (data.success) {
           currentUser = data.user;
+          successEl.textContent = '✅ Login successful! Loading videos...';
+          
+          // Save session
+          const session = saveSession(data.user, key);
+          
+          // Show video content
           document.getElementById('loginContainer').style.display = 'none';
           document.getElementById('videoContent').style.display = 'block';
           document.getElementById('userInfo').innerHTML = `
-            👤 ${data.user.email} 
+            👤 ${data.user.email}
+            <span class="session-timer" id="sessionTimerSmall">24h remaining</span>
             <button class="logout-btn" onclick="window.logout()">Logout</button>
           `;
+          
+          // Start timer
+          startSessionTimer(session.expiresAt);
+          
+          // Load videos
           fetchPlaylists();
         } else {
           errorEl.textContent = '❌ ' + (data.error || 'Login failed');
@@ -116,8 +233,10 @@
       }
     }
 
-    // ----- Logout -----
+    // ==================== LOGOUT ====================
+
     window.logout = function() {
+      clearSession();
       currentUser = null;
       document.getElementById('loginContainer').style.display = 'block';
       document.getElementById('videoContent').style.display = 'none';
@@ -125,9 +244,47 @@
       document.getElementById('loginEmail').value = '';
       document.getElementById('loginKey').value = '';
       document.getElementById('loginError').textContent = '';
+      document.getElementById('loginSuccess').textContent = '';
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      // Dispose players
+      for (let key in window) {
+        if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
+          try { window[key].dispose(); } catch(e) {}
+        }
+      }
     };
 
-    // ----- Fetch Playlists -----
+    // ==================== CHECK SESSION ON LOAD ====================
+
+    function checkExistingSession() {
+      const session = getSession();
+      if (session && session.user) {
+        currentUser = session.user;
+        
+        // Auto login
+        document.getElementById('loginContainer').style.display = 'none';
+        document.getElementById('videoContent').style.display = 'block';
+        document.getElementById('userInfo').innerHTML = `
+          👤 ${session.user.email}
+          <span class="session-timer" id="sessionTimerSmall">Session active</span>
+          <button class="logout-btn" onclick="window.logout()">Logout</button>
+        `;
+        
+        // Start timer
+        startSessionTimer(session.expiresAt);
+        
+        // Load videos
+        fetchPlaylists();
+        return true;
+      }
+      return false;
+    }
+
+    // ==================== FETCH PLAYLISTS ====================
+
     async function fetchPlaylists() {
       const statusBar = document.getElementById('statusBar');
       try {
@@ -147,7 +304,8 @@
       }
     }
 
-    // ----- Render Playlists -----
+    // ==================== RENDER PLAYLISTS ====================
+
     function renderPlaylists() {
       const container = document.getElementById('playlistSelector');
       if (!playlists.length) {
@@ -178,7 +336,8 @@
       }
     }
 
-    // ----- Render Chapters -----
+    // ==================== RENDER CHAPTERS ====================
+
     function renderChapters(playlistId) {
       const container = document.getElementById('chaptersContainer');
       const playlist = playlists.find(p => p.id === playlistId);
@@ -256,13 +415,16 @@
       });
     }
 
-    // ----- Event Listeners -----
+    // ==================== EVENT LISTENERS ====================
+
     document.getElementById('loginBtn').addEventListener('click', login);
     document.getElementById('loginKey').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
     document.getElementById('loginEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
 
-    // ----- Dispose players on unload -----
+    // ==================== DISPOSE PLAYERS ON UNLOAD ====================
+
     window.addEventListener('beforeunload', function() {
+      if (timerInterval) clearInterval(timerInterval);
       for (let key in window) {
         if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
           try { window[key].dispose(); } catch(e) {}
@@ -270,7 +432,18 @@
       }
     });
 
-    console.log('✅ Video Portal loaded');
+    // ==================== INIT ====================
+
+    // Check if user already has valid session
+    const hasSession = checkExistingSession();
+    
+    if (!hasSession) {
+      // Show login form
+      document.getElementById('loginContainer').style.display = 'block';
+      document.getElementById('videoContent').style.display = 'none';
+    }
+
+    console.log('✅ Video Portal loaded with 24-hour session');
   })();
 </script>
 </body>
