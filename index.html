@@ -53,7 +53,7 @@
 <script>
   (function() {
     // ----- CONFIG -----
-    const API_BASE = 'https://video-api.your-subdomain.workers.dev/api/playlists';
+    const API_BASE = 'http://video-play-api.newstreamcp.workers.dev/api/playlists';
     const STORAGE_KEY = 'playlistData';
 
     let playlists = [];
@@ -74,16 +74,7 @@
               name: 'Trigonometry',
               chapters: [
                 { id: 'ch1', name: 'Chapter 1: Introduction to Trigonometry', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
-                { id: 'ch2', name: 'Chapter 2: Trigonometric Ratios', link: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-                { id: 'ch3', name: 'Chapter 3: Trigonometric Identities', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
-              ]
-            },
-            {
-              id: 'pl_demo2',
-              name: 'Algebra',
-              chapters: [
-                { id: 'al1', name: 'Chapter 1: Linear Equations', link: 'https://www.w3schools.com/html/mov_bbb.mp4' },
-                { id: 'al2', name: 'Chapter 2: Quadratic Equations', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
+                { id: 'ch2', name: 'Chapter 2: Trigonometric Ratios', link: 'https://www.w3schools.com/html/mov_bbb.mp4' }
               ]
             }
           ];
@@ -110,11 +101,18 @@
         const data = await response.json();
         
         if (data.success && data.playlists && Array.isArray(data.playlists)) {
-          playlists = data.playlists;
-          saveToStorage();
-          statusBar.textContent = '✅ Connected to Cloudflare';
-          statusBar.style.background = '#e6f5e6';
-          statusBar.style.color = '#1a5d3c';
+          if (data.playlists.length > 0) {
+            playlists = data.playlists;
+            saveToStorage();
+            statusBar.textContent = '✅ Connected to Cloudflare';
+            statusBar.style.background = '#e6f5e6';
+            statusBar.style.color = '#1a5d3c';
+          } else {
+            statusBar.textContent = '📭 No playlists on Cloudflare. Using local data.';
+            statusBar.style.background = '#fff3cd';
+            statusBar.style.color = '#856404';
+            loadFromStorage();
+          }
         } else {
           throw new Error('Invalid data format');
         }
