@@ -94,7 +94,7 @@
     <span class="badge">🔐 Protected</span>
   </div>
 
-  <!-- Password Gate with Username + Password -->
+  <!-- Password Gate -->
   <div id="passwordGate" class="password-gate">
     <label for="adminUsername">👤 Username</label>
     <input type="text" id="adminUsername" placeholder="Enter username" value="admin" />
@@ -321,7 +321,7 @@
       }
     }
 
-    // ----- Load Functions -----
+    // ==================== LOAD PLAYLISTS ====================
     async function loadPlaylists() {
       try {
         const data = await apiCall('/playlists');
@@ -330,7 +330,7 @@
           renderAdminList();
           updatePlaylistSelect();
           updateApiStatus('connected');
-          showFeedback('✅ Playlists loaded', 'success', 'playlistFeedback');
+          showFeedback('✅ Playlists loaded from database', 'success', 'playlistFeedback');
         }
       } catch (error) {
         showFeedback('❌ Failed to load: ' + error.message, 'error', 'playlistFeedback');
@@ -338,23 +338,7 @@
       }
     }
 
-    async function loadUsers() {
-      try {
-        const data = await apiCall('/users');
-        if (data.success) {
-          users = data.users;
-          renderUserList();
-          updateUserSelect();
-          updateApiStatus('connected');
-          showFeedback('✅ Users loaded', 'success', 'userFeedback');
-        }
-      } catch (error) {
-        showFeedback('❌ Failed to load users: ' + error.message, 'error', 'userFeedback');
-        updateApiStatus('error');
-      }
-    }
-
-    // ----- Add Functions -----
+    // ==================== ADD PLAYLIST ====================
     async function addPlaylist() {
       const name = document.getElementById('newPlaylistName').value.trim();
       if (!name) {
@@ -368,7 +352,7 @@
         });
         if (data.success) {
           document.getElementById('newPlaylistName').value = '';
-          showFeedback('✅ Playlist added', 'success', 'playlistFeedback');
+          showFeedback('✅ Playlist added to database', 'success', 'playlistFeedback');
           loadPlaylists();
         }
       } catch (error) {
@@ -376,6 +360,7 @@
       }
     }
 
+    // ==================== ADD CHAPTER ====================
     async function addChapter() {
       const playlistId = document.getElementById('playlistSelect').value;
       const name = document.getElementById('chapterName').value.trim();
@@ -392,7 +377,7 @@
         if (data.success) {
           document.getElementById('chapterName').value = '';
           document.getElementById('chapterLink').value = '';
-          showFeedback('✅ Chapter added', 'success', 'chapterFeedback');
+          showFeedback('✅ Chapter added to database', 'success', 'chapterFeedback');
           loadPlaylists();
         }
       } catch (error) {
@@ -400,6 +385,54 @@
       }
     }
 
+    // ==================== DELETE PLAYLIST ====================
+    async function deletePlaylist(playlistId) {
+      if (!confirm('Delete this playlist?')) return;
+      try {
+        await apiCall('/playlists', {
+          method: 'DELETE',
+          body: JSON.stringify({ playlistId })
+        });
+        loadPlaylists();
+        showFeedback('🗑️ Deleted from database', 'success', 'playlistFeedback');
+      } catch (error) {
+        showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
+      }
+    }
+
+    // ==================== DELETE CHAPTER ====================
+    async function deleteChapter(playlistId, chapterId) {
+      if (!confirm('Delete this chapter?')) return;
+      try {
+        await apiCall('/playlists/chapter', {
+          method: 'DELETE',
+          body: JSON.stringify({ playlistId, chapterId })
+        });
+        loadPlaylists();
+        showFeedback('🗑️ Deleted from database', 'success', 'playlistFeedback');
+      } catch (error) {
+        showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
+      }
+    }
+
+    // ==================== LOAD USERS ====================
+    async function loadUsers() {
+      try {
+        const data = await apiCall('/users');
+        if (data.success) {
+          users = data.users;
+          renderUserList();
+          updateUserSelect();
+          updateApiStatus('connected');
+          showFeedback('✅ Users loaded from database', 'success', 'userFeedback');
+        }
+      } catch (error) {
+        showFeedback('❌ Failed to load users: ' + error.message, 'error', 'userFeedback');
+        updateApiStatus('error');
+      }
+    }
+
+    // ==================== ADD USER ====================
     async function addUser() {
       const email = document.getElementById('newUserEmail').value.trim();
       if (!email) {
@@ -413,7 +446,7 @@
         });
         if (data.success) {
           document.getElementById('newUserEmail').value = '';
-          showFeedback('✅ User added. Key: ' + data.key, 'success', 'userFeedback');
+          showFeedback('✅ User added to database. Key: ' + data.key, 'success', 'userFeedback');
           loadUsers();
         } else {
           showFeedback('❌ ' + data.error, 'error', 'userFeedback');
@@ -423,7 +456,22 @@
       }
     }
 
-    // ----- Generate Key -----
+    // ==================== DELETE USER ====================
+    async function deleteUser(userId) {
+      if (!confirm('Delete this user?')) return;
+      try {
+        await apiCall('/users', {
+          method: 'DELETE',
+          body: JSON.stringify({ userId })
+        });
+        loadUsers();
+        showFeedback('🗑️ User deleted from database', 'success', 'userFeedback');
+      } catch (error) {
+        showFeedback('❌ Failed to delete', 'error', 'userFeedback');
+      }
+    }
+
+    // ==================== GENERATE KEY ====================
     async function generateKey() {
       const userId = document.getElementById('userSelect').value;
       if (!userId) {
@@ -440,7 +488,7 @@
           const keyText = document.getElementById('keyText');
           display.style.display = 'flex';
           keyText.textContent = data.key;
-          showFeedback('✅ Key generated! Click Copy to copy', 'success', 'keyFeedback');
+          showFeedback('✅ Key generated and saved to database!', 'success', 'keyFeedback');
           loadUsers();
         }
       } catch (error) {
@@ -448,7 +496,7 @@
       }
     }
 
-    // ----- Copy Key -----
+    // ==================== COPY KEY ====================
     window.copyKey = function() {
       const keyText = document.getElementById('keyText').textContent;
       if (!keyText) {
@@ -491,54 +539,33 @@
       document.body.removeChild(textarea);
     }
 
-    // ----- Delete Functions -----
-    async function deletePlaylist(playlistId) {
-      if (!confirm('Delete this playlist?')) return;
+    // ==================== VIEW KEYS ====================
+    window.viewKeys = async function(userId) {
       try {
-        await apiCall('/playlists', {
-          method: 'DELETE',
-          body: JSON.stringify({ playlistId })
-        });
-        loadPlaylists();
-        showFeedback('🗑️ Deleted', 'success', 'playlistFeedback');
+        const data = await apiCall('/keys?userId=' + userId);
+        if (data.success) {
+          let msg = '🔑 Keys for this user:\n\n';
+          if (data.keys.length === 0) {
+            msg += 'No keys generated yet.';
+          } else {
+            data.keys.forEach(k => {
+              const status = k.is_used ? '✅ Used' : '❌ Not used';
+              const expires = new Date(k.expires_at).toLocaleString();
+              msg += `Key: ${k.key_value}\nStatus: ${status}\nExpires: ${expires}\n\n`;
+            });
+          }
+          alert(msg);
+        }
       } catch (error) {
-        showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
+        alert('Failed to load keys');
       }
-    }
+    };
 
-    async function deleteChapter(playlistId, chapterId) {
-      if (!confirm('Delete this chapter?')) return;
-      try {
-        await apiCall('/playlists/chapter', {
-          method: 'DELETE',
-          body: JSON.stringify({ playlistId, chapterId })
-        });
-        loadPlaylists();
-        showFeedback('🗑️ Deleted', 'success', 'playlistFeedback');
-      } catch (error) {
-        showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
-      }
-    }
-
-    async function deleteUser(userId) {
-      if (!confirm('Delete this user?')) return;
-      try {
-        await apiCall('/users', {
-          method: 'DELETE',
-          body: JSON.stringify({ userId })
-        });
-        loadUsers();
-        showFeedback('🗑️ User deleted', 'success', 'userFeedback');
-      } catch (error) {
-        showFeedback('❌ Failed to delete', 'error', 'userFeedback');
-      }
-    }
-
-    // ----- Render Functions -----
+    // ==================== RENDER FUNCTIONS ====================
     function renderAdminList() {
       const list = document.getElementById('adminList');
       if (!playlists.length) {
-        list.innerHTML = `<div class="empty-state">No playlists</div>`;
+        list.innerHTML = `<div class="empty-state">No playlists in database</div>`;
         return;
       }
       let html = '';
@@ -571,7 +598,7 @@
     function renderUserList() {
       const list = document.getElementById('userList');
       if (!users.length) {
-        list.innerHTML = `<div class="empty-state">No users</div>`;
+        list.innerHTML = `<div class="empty-state">No users in database</div>`;
         return;
       }
       let html = '';
@@ -633,29 +660,7 @@
       setTimeout(() => { el.textContent = ''; el.className = 'toast-msg'; }, 5000);
     }
 
-    // ----- View Keys -----
-    window.viewKeys = async function(userId) {
-      try {
-        const data = await apiCall('/keys?userId=' + userId);
-        if (data.success) {
-          let msg = '🔑 Keys for this user:\n\n';
-          if (data.keys.length === 0) {
-            msg += 'No keys generated yet.';
-          } else {
-            data.keys.forEach(k => {
-              const status = k.is_used ? '✅ Used' : '❌ Not used';
-              const expires = new Date(k.expires_at).toLocaleString();
-              msg += `Key: ${k.key_value}\nStatus: ${status}\nExpires: ${expires}\n\n`;
-            });
-          }
-          alert(msg);
-        }
-      } catch (error) {
-        alert('Failed to load keys');
-      }
-    };
-
-    // ----- Auth -----
+    // ==================== AUTH ====================
     function setupAuth() {
       const unlockBtn = document.getElementById('unlockBtn');
       const pwdInput = document.getElementById('adminPwdInput');
@@ -683,13 +688,14 @@
       });
     }
 
-    // ----- Global Functions -----
+    // ==================== GLOBAL FUNCTIONS ====================
     window.deletePlaylist = deletePlaylist;
     window.deleteChapter = deleteChapter;
     window.deleteUser = deleteUser;
     window.copyKey = copyKey;
+    window.viewKeys = viewKeys;
 
-    // ----- Event Listeners -----
+    // ==================== EVENT LISTENERS ====================
     document.getElementById('addPlaylistBtn').addEventListener('click', addPlaylist);
     document.getElementById('addChapterBtn').addEventListener('click', addChapter);
     document.getElementById('addUserBtn').addEventListener('click', addUser);
@@ -697,7 +703,7 @@
     document.getElementById('refreshBtn').addEventListener('click', () => {
       loadPlaylists();
       loadUsers();
-      showFeedback('🔄 Refreshed', 'info', 'playlistFeedback');
+      showFeedback('🔄 Refreshed from database', 'info', 'playlistFeedback');
     });
 
     document.getElementById('newPlaylistName').addEventListener('keydown', e => { if (e.key === 'Enter') addPlaylist(); });
@@ -706,7 +712,7 @@
     document.getElementById('newUserEmail').addEventListener('keydown', e => { if (e.key === 'Enter') addUser(); });
 
     setupAuth();
-    console.log('✅ Admin panel loaded');
+    console.log('✅ Admin panel loaded - Database connected');
   })();
 </script>
 </body>
