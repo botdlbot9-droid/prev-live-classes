@@ -3,50 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel · Video Portal</title>
+  <title>Admin Panel · Playlist Manager</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
-    .app { max-width: 700px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
+    .app { max-width: 800px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
     .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
     .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; letter-spacing: -0.3px; }
-    .header .badge { background: #eef3fa; padding: 6px 16px; border-radius: 40px; font-size: 0.8rem; color: #4c637f; }
-    .admin-content { display: block; }
+    .badge { background: #eef3fa; padding: 6px 16px; border-radius: 40px; font-size: 0.8rem; color: #4c637f; }
+    
     label { font-weight: 500; color: #1a2b4c; display: block; margin-top: 16px; margin-bottom: 5px; font-size: 0.9rem; }
-    input { width: 100%; padding: 12px 16px; border: 1px solid #d9e1ec; border-radius: 20px; font-size: 0.95rem; background: #fafcff; transition: 0.15s; }
-    input:focus { border-color: #1a2b4c; outline: none; background: white; box-shadow: 0 0 0 3px rgba(26,43,76,0.08); }
+    input, select { width: 100%; padding: 12px 16px; border: 1px solid #d9e1ec; border-radius: 20px; font-size: 0.95rem; background: #fafcff; transition: 0.15s; }
+    input:focus, select:focus { border-color: #1a2b4c; outline: none; background: white; box-shadow: 0 0 0 3px rgba(26,43,76,0.08); }
+    
     .row-btns { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
     .btn-primary { background: #1a2b4c; color: white; border: none; border-radius: 60px; padding: 12px 28px; font-weight: 500; cursor: pointer; flex:1; min-width:120px; transition:0.15s; }
     .btn-primary:hover { background: #2f4370; transform: scale(1.01); }
+    .btn-success { background: #1a7a3a; color: white; border: none; border-radius: 60px; padding: 12px 28px; font-weight: 500; cursor: pointer; flex:1; min-width:120px; transition:0.15s; }
+    .btn-success:hover { background: #1f944a; }
     .btn-danger { background: #b33a3a; color: white; border: none; border-radius: 60px; padding: 12px 28px; font-weight: 500; cursor: pointer; transition:0.15s; }
     .btn-danger:hover { background: #992e2e; }
     .btn-outline { background: transparent; color: #1a2b4c; border: 1px solid #d0dae8; border-radius: 60px; padding: 12px 24px; font-weight: 500; cursor: pointer; transition:0.15s; }
     .btn-outline:hover { background: #f0f4fe; }
-    .toast-msg { font-size: 0.9rem; margin-top: 12px; padding: 8px 16px; border-radius: 60px; background: #e6f0fa; color: #1a3f5c; display: inline-block; }
+    .btn-sm { padding: 8px 18px; font-size: 0.85rem; }
+    
+    .toast-msg { font-size: 0.9rem; margin-top: 12px; padding: 8px 16px; border-radius: 60px; display: inline-block; }
     .toast-error { background: #fee; color: #b33a3a; }
     .toast-success { background: #e6f5e6; color: #1a5d3c; }
-    .entry-list { background: #f5f8fe; border-radius: 20px; padding: 6px 0; margin: 16px 0 6px; max-height: 300px; overflow-y: auto; }
+    .toast-info { background: #e6f0fa; color: #1a3f5c; }
+    
+    .section-title { font-weight: 600; color: #0b1a33; margin-top: 24px; margin-bottom: 8px; font-size: 1.1rem; border-bottom: 2px solid #e8edf6; padding-bottom: 8px; }
+    
+    .entry-list { background: #f5f8fe; border-radius: 20px; padding: 6px 0; margin: 12px 0 6px; max-height: 350px; overflow-y: auto; }
     .entry-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid #e6edf6; font-size: 0.9rem; }
     .entry-item:last-child { border-bottom: none; }
     .entry-item .info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-    .entry-item .class-name { font-weight: 600; color: #0b1a33; }
-    .entry-item .link-preview { color: #4c637f; font-size: 0.75rem; word-break: break-all; max-width: 220px; }
+    .entry-item .name { font-weight: 600; color: #0b1a33; }
+    .entry-item .sub { color: #4c637f; font-size: 0.8rem; }
+    .entry-item .actions { display: flex; gap: 8px; align-items: center; }
     .entry-item .del-btn { background: none; border: none; color: #b33a3a; font-size: 1.2rem; cursor: pointer; padding: 4px 10px; border-radius: 40px; transition:0.1s; }
     .entry-item .del-btn:hover { background: #ffe6e6; }
+    .entry-item .edit-btn { background: none; border: none; color: #1a2b4c; font-size: 1rem; cursor: pointer; padding: 4px 10px; border-radius: 40px; transition:0.1s; }
+    .entry-item .edit-btn:hover { background: #e6edf6; }
+    
     .empty-state { color: #6a7c94; padding: 20px 0; text-align: center; font-style: italic; }
-    .api-status { font-size: 0.8rem; color: #4c637f; margin-top: 8px; padding: 6px 14px; background: #eef3fa; border-radius: 40px; display: inline-block; }
+    .api-status { font-size: 0.8rem; color: #4c637f; padding: 6px 14px; background: #eef3fa; border-radius: 40px; display: inline-block; }
     .status-connected { background: #e6f5e6; color: #1a5d3c; }
     .status-error { background: #fee; color: #b33a3a; }
-    .section-title { font-weight: 600; color: #0b1a33; margin-top: 24px; margin-bottom: 8px; font-size: 1.1rem; }
+    
     .password-gate { background: #f8faff; border-radius: 20px; padding: 24px; margin-top: 10px; }
     .password-gate input { margin-bottom: 12px; }
     .password-gate .pwd-error { color: #b33a3a; font-size: 0.9rem; margin-top: 6px; }
+    
+    .flex-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .flex-row > * { flex: 1; min-width: 150px; }
   </style>
 </head>
 <body>
 <div class="app" id="app">
   <div class="header">
-    <h1>⚙️ Admin Panel</h1>
+    <h1>⚙️ Playlist Manager</h1>
     <span class="badge">🔐 Protected</span>
   </div>
 
@@ -60,30 +76,42 @@
     </div>
   </div>
 
-  <!-- Admin Content (hidden until password correct) -->
+  <!-- Admin Content -->
   <div id="adminContent" style="display: none;">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-      <div>
-        <span class="api-status" id="apiStatus">🌐 API: local</span>
-      </div>
-      <button class="btn-outline" id="syncApiBtn" style="padding:8px 20px; font-size:0.85rem;">🔄 Sync with Cloudflare</button>
+    <div class="flex-row" style="margin-bottom:16px;">
+      <span class="api-status" id="apiStatus">🌐 API: local</span>
+      <button class="btn-outline btn-sm" id="syncApiBtn" style="flex:0;">🔄 Sync with Cloudflare</button>
     </div>
 
-    <div class="section-title">➕ Add new video</div>
-    <label for="newClassName">Class name</label>
-    <input type="text" id="newClassName" placeholder="e.g. 'Tutorial 1'" />
-    <label for="newClassLink">Video URL (HLS / MP4)</label>
-    <input type="text" id="newClassLink" placeholder="https://example.com/stream.m3u8" />
+    <!-- Add Playlist -->
+    <div class="section-title">📁 Add New Playlist</div>
+    <div class="flex-row">
+      <input type="text" id="newPlaylistName" placeholder="Playlist name (e.g. Trigonometry)" />
+      <button class="btn-success" id="addPlaylistBtn">➕ Add Playlist</button>
+    </div>
+    <div id="playlistFeedback" class="toast-msg"></div>
+
+    <!-- Add Chapter to Selected Playlist -->
+    <div class="section-title">📝 Add Chapter to Playlist</div>
+    <div class="flex-row">
+      <select id="playlistSelect">
+        <option value="">Select a playlist</option>
+      </select>
+    </div>
+    <div class="flex-row">
+      <input type="text" id="chapterName" placeholder="Chapter name (e.g. Chapter 1: Introduction)" />
+      <input type="text" id="chapterLink" placeholder="Video URL (HLS / MP4)" />
+    </div>
     <div class="row-btns">
-      <button class="btn-primary" id="saveClassBtn">➕ Add entry</button>
+      <button class="btn-primary" id="addChapterBtn">➕ Add Chapter</button>
     </div>
-    <div id="adminFeedback" class="toast-msg"></div>
+    <div id="chapterFeedback" class="toast-msg"></div>
 
-    <div class="section-title" style="margin-top:28px;">📋 Current entries</div>
+    <!-- Current Playlists -->
+    <div class="section-title">📋 All Playlists & Chapters</div>
     <div class="entry-list" id="adminList">
       <div class="empty-state">Loading...</div>
     </div>
-    <div style="margin-top: 6px; font-size:0.75rem; color:#4c637f;">🔁 Data stored in localStorage + Cloudflare sync</div>
     
     <div style="margin-top:20px; border-top:1px solid #e8edf6; padding-top:18px;">
       <button class="btn-danger" id="logoutBtn" style="padding:8px 24px; font-size:0.85rem;">🚪 Logout</button>
@@ -94,82 +122,148 @@
 <script>
   (function() {
     // ---------- CONFIG ----------
-    // Replace with your Cloudflare Worker / API endpoint
-    const API_BASE = 'https://your-cloudflare-worker.workers.dev/api/videos';
-    const STORAGE_KEY = 'videoClassData';
-    const ADMIN_PASSWORD = 'admin123';  // change as needed
+    const API_BASE = 'https://your-cloudflare-worker.workers.dev/api/playlists';
+    const STORAGE_KEY = 'playlistData';
+    const ADMIN_PASSWORD = 'admin123';
 
-    let videoItems = [];
+    let playlists = [];
     let isUnlocked = false;
 
     // ---------- DATA HELPERS ----------
     function loadData() {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        try { videoItems = JSON.parse(stored); if (!Array.isArray(videoItems)) videoItems = []; } 
-        catch(e) { videoItems = []; }
+        try { 
+          playlists = JSON.parse(stored); 
+          if (!Array.isArray(playlists)) playlists = []; 
+        } catch(e) { playlists = []; }
       } else {
-        videoItems = [
-          { id: 'demo1', className: 'Big Buck Bunny (HLS)', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
-          { id: 'demo2', className: 'Sample MP4', link: 'https://www.w3schools.com/html/mov_bbb.mp4' }
+        playlists = [
+          {
+            id: 'trigonometry',
+            name: 'Trigonometry',
+            chapters: [
+              { id: 'ch1', name: 'Chapter 1: Introduction to Trigonometry', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
+              { id: 'ch2', name: 'Chapter 2: Trigonometric Ratios', link: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+              { id: 'ch3', name: 'Chapter 3: Trigonometric Identities', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
+            ]
+          },
+          {
+            id: 'algebra',
+            name: 'Algebra',
+            chapters: [
+              { id: 'al1', name: 'Chapter 1: Linear Equations', link: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+              { id: 'al2', name: 'Chapter 2: Quadratic Equations', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
+            ]
+          }
         ];
         saveData();
       }
+      updatePlaylistSelect();
     }
 
     function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(videoItems));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists));
       updateApiStatus('local');
+      updatePlaylistSelect();
     }
 
     function genId() { return Date.now().toString(36) + Math.random().toString(36).substring(2,6); }
+
+    // ---------- UPDATE PLAYLIST SELECT DROPDOWN ----------
+    function updatePlaylistSelect() {
+      const select = document.getElementById('playlistSelect');
+      if (!select) return;
+      const currentValue = select.value;
+      select.innerHTML = '<option value="">Select a playlist</option>';
+      playlists.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = p.name;
+        select.appendChild(option);
+      });
+      if (currentValue && playlists.some(p => p.id === currentValue)) {
+        select.value = currentValue;
+      }
+    }
 
     // ---------- RENDER ADMIN LIST ----------
     function renderAdminList() {
       const list = document.getElementById('adminList');
       if (!list) return;
-      if (!videoItems.length) {
-        list.innerHTML = `<div class="empty-state">No entries yet. Add one above.</div>`;
+      if (!playlists.length) {
+        list.innerHTML = `<div class="empty-state">No playlists yet. Add one above.</div>`;
         return;
       }
       let html = '';
-      videoItems.forEach((item, index) => {
-        const name = item.className || 'Unnamed';
-        const link = item.link || '';
+      playlists.forEach(playlist => {
         html += `
-          <div class="entry-item">
-            <div class="info">
-              <span class="class-name">${name}</span>
-              <span class="link-preview">${link.length > 60 ? link.substring(0,60)+'…' : link}</span>
-            </div>
-            <button class="del-btn" data-id="${item.id}" title="Delete">✕</button>
+          <div style="background:#eef3fa; padding:10px 16px; font-weight:700; color:#0b1a33; border-radius:12px; margin:8px 0 4px;">
+            📁 ${playlist.name}
+            <button class="del-btn" data-id="${playlist.id}" style="float:right;" title="Delete playlist">✕</button>
           </div>
         `;
+        if (playlist.chapters && playlist.chapters.length > 0) {
+          playlist.chapters.forEach((chapter, idx) => {
+            html += `
+              <div class="entry-item" style="padding-left:32px;">
+                <div class="info">
+                  <span class="name">${chapter.name}</span>
+                  <span class="sub">${chapter.link.length > 50 ? chapter.link.substring(0,50)+'…' : chapter.link}</span>
+                </div>
+                <div class="actions">
+                  <button class="del-btn" data-playlist="${playlist.id}" data-chapter="${chapter.id}" title="Delete chapter">✕</button>
+                </div>
+              </div>
+            `;
+          });
+        } else {
+          html += `<div class="entry-item" style="padding-left:32px; color:#6a7c94; font-style:italic;">No chapters</div>`;
+        }
       });
       list.innerHTML = html;
-      
-      // Delete events
-      list.querySelectorAll('.del-btn').forEach(btn => {
+
+      // Delete playlist
+      list.querySelectorAll('.del-btn[data-id]').forEach(btn => {
         btn.addEventListener('click', function() {
           const id = this.dataset.id;
           if (!id) return;
-          if (confirm('Delete this class?')) {
-            videoItems = videoItems.filter(it => it.id !== id);
+          if (confirm('Delete this playlist and all its chapters?')) {
+            playlists = playlists.filter(p => p.id !== id);
             saveData();
             renderAdminList();
-            showFeedback('🗑️ Deleted successfully.', 'success');
+            showFeedback('🗑️ Playlist deleted.', 'success', 'playlistFeedback');
+          }
+        });
+      });
+
+      // Delete chapter
+      list.querySelectorAll('.del-btn[data-playlist]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const playlistId = this.dataset.playlist;
+          const chapterId = this.dataset.chapter;
+          if (!playlistId || !chapterId) return;
+          const playlist = playlists.find(p => p.id === playlistId);
+          if (!playlist) return;
+          if (confirm('Delete this chapter?')) {
+            playlist.chapters = playlist.chapters.filter(c => c.id !== chapterId);
+            saveData();
+            renderAdminList();
+            showFeedback('🗑️ Chapter deleted.', 'success', 'playlistFeedback');
           }
         });
       });
     }
 
     // ---------- FEEDBACK ----------
-    function showFeedback(msg, type = 'info') {
-      const el = document.getElementById('adminFeedback');
+    function showFeedback(msg, type = 'info', elementId = 'playlistFeedback') {
+      const el = document.getElementById(elementId);
+      if (!el) return;
       el.textContent = msg;
       el.className = 'toast-msg';
       if (type === 'error') el.classList.add('toast-error');
       else if (type === 'success') el.classList.add('toast-success');
+      else el.classList.add('toast-info');
       setTimeout(() => {
         if (el.textContent === msg) {
           el.textContent = '';
@@ -181,6 +275,7 @@
     // ---------- API STATUS ----------
     function updateApiStatus(mode) {
       const el = document.getElementById('apiStatus');
+      if (!el) return;
       if (mode === 'local') {
         el.textContent = '🌐 API: local storage';
         el.className = 'api-status';
@@ -195,70 +290,84 @@
 
     // ---------- CLOUDFLARE API SYNC ----------
     async function syncWithCloudflare() {
-      const statusEl = document.getElementById('apiStatus');
       if (!API_BASE || API_BASE.includes('your-cloudflare')) {
-        showFeedback('⚠️ Set API_BASE to your Cloudflare Worker URL.', 'error');
+        showFeedback('⚠️ Set API_BASE to your Cloudflare Worker URL.', 'error', 'playlistFeedback');
         return;
       }
       try {
-        statusEl.textContent = '🔄 Syncing...';
-        statusEl.className = 'api-status';
-        
         const response = await fetch(API_BASE, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: videoItems })
+          body: JSON.stringify({ playlists: playlists })
         });
-        
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
-        showFeedback(`✅ Synced with Cloudflare (${result.message || 'ok'})`, 'success');
+        showFeedback(`✅ Synced with Cloudflare (${result.message || 'ok'})`, 'success', 'playlistFeedback');
         updateApiStatus('connected');
       } catch (err) {
-        showFeedback(`❌ Sync failed: ${err.message}`, 'error');
+        showFeedback(`❌ Sync failed: ${err.message}`, 'error', 'playlistFeedback');
         updateApiStatus('error');
       }
     }
 
-    // ---------- LOAD FROM CLOUDFLARE ----------
-    async function fetchFromCloudflare() {
-      if (!API_BASE || API_BASE.includes('your-cloudflare')) return;
-      try {
-        const resp = await fetch(API_BASE);
-        if (!resp.ok) throw new Error('API not reachable');
-        const data = await resp.json();
-        if (data.items && Array.isArray(data.items)) {
-          videoItems = data.items;
-          saveData();
-          renderAdminList();
-          updateApiStatus('connected');
-          showFeedback('✅ Loaded from Cloudflare', 'success');
-        }
-      } catch (e) {
-        console.log('Cloudflare fetch failed, using local data');
-        updateApiStatus('local');
-        loadData();
-        renderAdminList();
+    // ---------- ADD PLAYLIST ----------
+    function addPlaylist() {
+      const nameInput = document.getElementById('newPlaylistName');
+      const name = nameInput.value.trim();
+      if (!name) {
+        showFeedback('⚠️ Please enter a playlist name.', 'error', 'playlistFeedback');
+        return;
       }
+      if (playlists.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+        showFeedback('⚠️ A playlist with this name already exists.', 'error', 'playlistFeedback');
+        return;
+      }
+      playlists.push({ 
+        id: genId(), 
+        name: name, 
+        chapters: [] 
+      });
+      saveData();
+      nameInput.value = '';
+      renderAdminList();
+      showFeedback(`✅ Added playlist "${name}"`, 'success', 'playlistFeedback');
     }
 
-    // ---------- ADMIN ACTIONS ----------
-    function setupAdminActions() {
-      document.getElementById('saveClassBtn').addEventListener('click', function() {
-        const name = document.getElementById('newClassName').value.trim();
-        const link = document.getElementById('newClassLink').value.trim();
-        if (!name || !link) { 
-          showFeedback('⚠️ Please fill both fields.', 'error'); 
-          return; 
-        }
-        videoItems.push({ id: genId(), className: name, link: link });
-        saveData();
-        document.getElementById('newClassName').value = '';
-        document.getElementById('newClassLink').value = '';
-        showFeedback(`✅ Added "${name}"`, 'success');
-        renderAdminList();
-        updateApiStatus('local');
+    // ---------- ADD CHAPTER ----------
+    function addChapter() {
+      const playlistSelect = document.getElementById('playlistSelect');
+      const nameInput = document.getElementById('chapterName');
+      const linkInput = document.getElementById('chapterLink');
+      
+      const playlistId = playlistSelect.value;
+      const name = nameInput.value.trim();
+      const link = linkInput.value.trim();
+      
+      if (!playlistId) {
+        showFeedback('⚠️ Please select a playlist.', 'error', 'chapterFeedback');
+        return;
+      }
+      if (!name || !link) {
+        showFeedback('⚠️ Please fill both chapter name and URL.', 'error', 'chapterFeedback');
+        return;
+      }
+      
+      const playlist = playlists.find(p => p.id === playlistId);
+      if (!playlist) {
+        showFeedback('⚠️ Playlist not found.', 'error', 'chapterFeedback');
+        return;
+      }
+      
+      playlist.chapters.push({ 
+        id: genId(), 
+        name: name, 
+        link: link 
       });
+      saveData();
+      nameInput.value = '';
+      linkInput.value = '';
+      renderAdminList();
+      showFeedback(`✅ Added chapter "${name}" to ${playlist.name}`, 'success', 'chapterFeedback');
     }
 
     // ---------- PASSWORD AUTH ----------
@@ -278,9 +387,9 @@
           isUnlocked = true;
           loadData();
           renderAdminList();
-          // Try to fetch from Cloudflare
           setTimeout(() => {
             if (API_BASE && !API_BASE.includes('your-cloudflare')) {
+              // Try to fetch from Cloudflare
               fetchFromCloudflare();
             }
           }, 300);
@@ -302,21 +411,59 @@
         pwdInput.value = '';
         pwdError.textContent = '';
         isUnlocked = false;
-        showFeedback('🔒 Logged out', 'info');
+        showFeedback('🔒 Logged out', 'info', 'playlistFeedback');
       });
+    }
 
-      // Sync button
-      document.getElementById('syncApiBtn').addEventListener('click', syncWithCloudflare);
+    // ---------- LOAD FROM CLOUDFLARE ----------
+    async function fetchFromCloudflare() {
+      if (!API_BASE || API_BASE.includes('your-cloudflare')) return;
+      try {
+        const resp = await fetch(API_BASE);
+        if (!resp.ok) throw new Error('API not reachable');
+        const data = await resp.json();
+        if (data.playlists && Array.isArray(data.playlists)) {
+          playlists = data.playlists;
+          saveData();
+          renderAdminList();
+          updateApiStatus('connected');
+          showFeedback('✅ Loaded from Cloudflare', 'success', 'playlistFeedback');
+        }
+      } catch (e) {
+        console.log('Cloudflare fetch failed, using local data');
+        updateApiStatus('local');
+        loadData();
+        renderAdminList();
+      }
     }
 
     // ---------- INIT ----------
-    // Load data but don't render until unlocked
-    loadData();
-    setupAdminActions();
-    setupAuth();
+    function init() {
+      loadData();
+      renderAdminList();
+      setupAuth();
+      
+      // Event listeners
+      document.getElementById('addPlaylistBtn').addEventListener('click', addPlaylist);
+      document.getElementById('addChapterBtn').addEventListener('click', addChapter);
+      document.getElementById('syncApiBtn').addEventListener('click', syncWithCloudflare);
+      
+      // Enter key on playlist name
+      document.getElementById('newPlaylistName').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') addPlaylist();
+      });
+      
+      // Enter key on chapter fields
+      document.getElementById('chapterName').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') addChapter();
+      });
+      document.getElementById('chapterLink').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') addChapter();
+      });
+    }
 
+    init();
     console.log('✅ Admin panel loaded. Password: admin123');
-    console.log('🔗 To connect Cloudflare, set API_BASE and deploy a Worker with PUT/GET.');
   })();
 </script>
 </body>
