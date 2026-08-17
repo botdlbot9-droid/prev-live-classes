@@ -3,31 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - Playlist Manager</title>
+  <title>Admin Panel - Complete System</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
-    .app { max-width: 800px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
+    .app { max-width: 900px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
     .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
     .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; }
     .badge { background: #eef3fa; padding: 6px 16px; border-radius: 40px; font-size: 0.8rem; color: #4c637f; }
-    label { font-weight: 500; color: #1a2b4c; display: block; margin-top: 16px; margin-bottom: 5px; font-size: 0.9rem; }
+    
+    .section-title { font-weight: 600; color: #0b1a33; margin-top: 24px; margin-bottom: 8px; font-size: 1.1rem; border-bottom: 2px solid #e8edf6; padding-bottom: 8px; }
+    .flex-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .flex-row > * { flex: 1; min-width: 150px; }
+    
     input, select { width: 100%; padding: 12px 16px; border: 1px solid #d9e1ec; border-radius: 20px; font-size: 0.95rem; background: #fafcff; }
     input:focus, select:focus { border-color: #1a2b4c; outline: none; background: white; }
-    .row-btns { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
-    .btn-primary { background: #1a2b4c; color: white; border: none; border-radius: 60px; padding: 12px 28px; font-weight: 500; cursor: pointer; flex:1; min-width:120px; }
+    
+    .btn { padding: 12px 28px; border: none; border-radius: 60px; font-weight: 500; cursor: pointer; transition: 0.15s; flex:1; min-width:120px; }
+    .btn-primary { background: #1a2b4c; color: white; }
     .btn-primary:hover { background: #2f4370; }
-    .btn-success { background: #1a7a3a; color: white; border: none; border-radius: 60px; padding: 12px 28px; font-weight: 500; cursor: pointer; flex:1; min-width:120px; }
+    .btn-success { background: #1a7a3a; color: white; }
     .btn-success:hover { background: #1f944a; }
-    .btn-danger { background: #b33a3a; color: white; border: none; border-radius: 60px; padding: 12px 28px; font-weight: 500; cursor: pointer; }
+    .btn-danger { background: #b33a3a; color: white; }
     .btn-danger:hover { background: #992e2e; }
-    .btn-outline { background: transparent; color: #1a2b4c; border: 1px solid #d0dae8; border-radius: 60px; padding: 12px 24px; font-weight: 500; cursor: pointer; }
+    .btn-outline { background: transparent; color: #1a2b4c; border: 1px solid #d0dae8; }
     .btn-outline:hover { background: #f0f4fe; }
-    .btn-sm { padding: 8px 18px; font-size: 0.85rem; }
-    .toast-msg { font-size: 0.9rem; margin-top: 12px; padding: 8px 16px; border-radius: 60px; display: inline-block; }
-    .toast-error { background: #fee; color: #b33a3a; }
-    .toast-success { background: #e6f5e6; color: #1a5d3c; }
-    .section-title { font-weight: 600; color: #0b1a33; margin-top: 24px; margin-bottom: 8px; font-size: 1.1rem; border-bottom: 2px solid #e8edf6; padding-bottom: 8px; }
+    .btn-sm { padding: 8px 18px; font-size: 0.85rem; flex: 0; }
+    
     .entry-list { background: #f5f8fe; border-radius: 20px; padding: 6px 0; margin: 12px 0 6px; max-height: 350px; overflow-y: auto; }
     .entry-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid #e6edf6; }
     .entry-item:last-child { border-bottom: none; }
@@ -36,21 +38,34 @@
     .entry-item .sub { color: #4c637f; font-size: 0.8rem; word-break: break-all; }
     .entry-item .del-btn { background: none; border: none; color: #b33a3a; font-size: 1.2rem; cursor: pointer; padding: 4px 10px; border-radius: 40px; }
     .entry-item .del-btn:hover { background: #ffe6e6; }
+    .entry-item .key-btn { background: none; border: 1px solid #d0dae8; border-radius: 40px; padding: 4px 12px; cursor: pointer; font-size: 0.8rem; }
+    .entry-item .key-btn:hover { background: #e6edf6; }
+    
     .empty-state { color: #6a7c94; padding: 20px 0; text-align: center; font-style: italic; }
-    .api-status { font-size: 0.8rem; color: #4c637f; padding: 6px 14px; background: #eef3fa; border-radius: 40px; display: inline-block; }
-    .status-connected { background: #e6f5e6; color: #1a5d3c; }
-    .status-error { background: #fee; color: #b33a3a; }
+    .toast-msg { font-size: 0.9rem; margin-top: 12px; padding: 8px 16px; border-radius: 60px; display: inline-block; }
+    .toast-error { background: #fee; color: #b33a3a; }
+    .toast-success { background: #e6f5e6; color: #1a5d3c; }
+    .toast-info { background: #e6f0fa; color: #1a3f5c; }
+    
     .password-gate { background: #f8faff; border-radius: 20px; padding: 24px; margin-top: 10px; }
     .password-gate .pwd-error { color: #b33a3a; font-size: 0.9rem; margin-top: 6px; }
-    .flex-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .flex-row > * { flex: 1; min-width: 150px; }
+    .api-status { font-size: 0.8rem; color: #4c637f; padding: 6px 14px; background: #eef3fa; border-radius: 40px; display: inline-block; }
+    .status-connected { background: #e6f5e6; color: #1a5d3c; }
+    
     .playlist-header { background: #eef3fa; padding: 10px 16px; font-weight: 700; border-radius: 12px; margin: 8px 0 4px; display: flex; justify-content: space-between; align-items: center; }
+    .tab-buttons { display: flex; gap: 12px; margin-bottom: 16px; }
+    .tab-btn { padding: 10px 24px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; cursor: pointer; font-weight: 500; }
+    .tab-btn.active { border-color: #1a2b4c; background: #1a2b4c; color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    .key-display { background: #f0f4fb; padding: 12px 16px; border-radius: 12px; font-family: monospace; word-break: break-all; margin: 8px 0; }
   </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
-    <h1>⚙️ Playlist Manager</h1>
+    <h1>⚙️ Admin Panel</h1>
     <span class="badge">🔐 Protected</span>
   </div>
 
@@ -59,308 +74,294 @@
     <label for="adminPwdInput">Enter admin password</label>
     <input type="password" id="adminPwdInput" placeholder="••••••••" />
     <div id="pwdError" class="pwd-error"></div>
-    <div class="row-btns">
-      <button class="btn-primary" id="unlockBtn">🔓 Unlock</button>
+    <div class="flex-row">
+      <button class="btn btn-primary" id="unlockBtn">🔓 Unlock</button>
     </div>
   </div>
 
   <!-- Admin Content -->
   <div id="adminContent" style="display: none;">
     <div class="flex-row" style="margin-bottom:16px;">
-      <span class="api-status" id="apiStatus">🌐 API: local</span>
-      <button class="btn-outline btn-sm" id="syncApiBtn" style="flex:0;">🔄 Sync to Cloudflare</button>
-      <button class="btn-outline btn-sm" id="loadApiBtn" style="flex:0;">📥 Load from Cloudflare</button>
+      <span class="api-status" id="apiStatus">🗄️ D1 Database</span>
+      <button class="btn btn-outline btn-sm" id="refreshBtn">📥 Refresh</button>
     </div>
 
-    <!-- Add Playlist -->
-    <div class="section-title">📁 Add New Playlist</div>
-    <div class="flex-row">
-      <input type="text" id="newPlaylistName" placeholder="Playlist name (e.g. Trigonometry)" />
-      <button class="btn-success" id="addPlaylistBtn">➕ Add Playlist</button>
+    <!-- Tabs -->
+    <div class="tab-buttons">
+      <button class="tab-btn active" data-tab="playlists">📁 Playlists</button>
+      <button class="tab-btn" data-tab="users">👥 Users</button>
     </div>
-    <div id="playlistFeedback" class="toast-msg"></div>
 
-    <!-- Add Chapter -->
-    <div class="section-title">📝 Add Chapter to Playlist</div>
-    <div class="flex-row">
-      <select id="playlistSelect">
-        <option value="">Select a playlist</option>
-      </select>
-    </div>
-    <div class="flex-row">
-      <input type="text" id="chapterName" placeholder="Chapter name" />
-      <input type="text" id="chapterLink" placeholder="Video URL (HLS / MP4)" />
-    </div>
-    <div class="row-btns">
-      <button class="btn-primary" id="addChapterBtn">➕ Add Chapter</button>
-    </div>
-    <div id="chapterFeedback" class="toast-msg"></div>
+    <!-- Playlists Tab -->
+    <div id="tab-playlists" class="tab-content active">
+      <div class="section-title">📁 Add New Playlist</div>
+      <div class="flex-row">
+        <input type="text" id="newPlaylistName" placeholder="Playlist name" />
+        <button class="btn btn-success" id="addPlaylistBtn">➕ Add</button>
+      </div>
+      <div id="playlistFeedback" class="toast-msg"></div>
 
-    <!-- Current Playlists -->
-    <div class="section-title">📋 All Playlists & Chapters</div>
-    <div class="entry-list" id="adminList">
-      <div class="empty-state">Loading...</div>
+      <div class="section-title">📝 Add Chapter</div>
+      <div class="flex-row">
+        <select id="playlistSelect"><option value="">Select playlist</option></select>
+      </div>
+      <div class="flex-row">
+        <input type="text" id="chapterName" placeholder="Chapter name" />
+        <input type="text" id="chapterLink" placeholder="Video URL" />
+      </div>
+      <div class="flex-row">
+        <button class="btn btn-primary" id="addChapterBtn">➕ Add Chapter</button>
+      </div>
+      <div id="chapterFeedback" class="toast-msg"></div>
+
+      <div class="section-title">📋 All Playlists & Chapters</div>
+      <div class="entry-list" id="adminList"><div class="empty-state">Loading...</div></div>
+    </div>
+
+    <!-- Users Tab -->
+    <div id="tab-users" class="tab-content">
+      <div class="section-title">👤 Add New User</div>
+      <div class="flex-row">
+        <input type="email" id="newUserEmail" placeholder="User email" />
+        <button class="btn btn-success" id="addUserBtn">➕ Add User</button>
+      </div>
+      <div id="userFeedback" class="toast-msg"></div>
+
+      <div class="section-title">🔑 Generate New Key</div>
+      <div class="flex-row">
+        <select id="userSelect"><option value="">Select user</option></select>
+        <button class="btn btn-primary" id="generateKeyBtn">🔄 Generate Key</button>
+      </div>
+      <div id="keyDisplay" class="key-display" style="display:none;"></div>
+      <div id="keyFeedback" class="toast-msg"></div>
+
+      <div class="section-title">👥 All Users</div>
+      <div class="entry-list" id="userList"><div class="empty-state">Loading...</div></div>
     </div>
     
     <div style="margin-top:20px; border-top:1px solid #e8edf6; padding-top:18px;">
-      <button class="btn-danger" id="logoutBtn" style="padding:8px 24px; font-size:0.85rem;">🚪 Logout</button>
+      <button class="btn btn-danger" id="logoutBtn" style="flex:0; padding:8px 24px;">🚪 Logout</button>
     </div>
   </div>
 </div>
 
 <script>
   (function() {
-    // ----- CONFIG -----
-    const API_BASE = 'http://video-play-api.newstreamcp.workers.dev/api/playlists';
-    const STORAGE_KEY = 'playlistData';
+    const API_BASE = 'http://video-play-api.newstreamcp.workers.dev/api';
     const ADMIN_PASSWORD = 'admin123';
-
     let playlists = [];
-    let isUnlocked = false;
+    let users = [];
 
-    // ----- Data Functions -----
-    function loadData() {
+    // ----- Tabs -----
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+        if (this.dataset.tab === 'users') loadUsers();
+        if (this.dataset.tab === 'playlists') loadPlaylists();
+      });
+    });
+
+    // ----- Load Playlists -----
+    async function loadPlaylists() {
       try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          playlists = JSON.parse(stored);
-          if (!Array.isArray(playlists)) playlists = [];
-        } else {
-          playlists = [];
-          saveData();
-        }
-      } catch(e) { playlists = []; }
-      updatePlaylistSelect();
-    }
-
-    function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists));
-      updateApiStatus('local');
-      updatePlaylistSelect();
-    }
-
-    function genId() { return 'id_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6); }
-
-    // ----- API Functions -----
-    async function loadFromCloudflare() {
-      try {
-        const response = await fetch(API_BASE);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const response = await fetch(API_BASE + '/playlists');
         const data = await response.json();
-        
-        if (data.success && data.playlists) {
-          playlists = data.playlists;
-          saveData();
-          renderAdminList();
-          updateApiStatus('connected');
-          showFeedback('✅ Loaded from Cloudflare', 'success', 'playlistFeedback');
-        }
-      } catch (error) {
-        showFeedback(`❌ Failed to load: ${error.message}`, 'error', 'playlistFeedback');
-        updateApiStatus('error');
-      }
-    }
-
-    async function syncToCloudflare() {
-      if (playlists.length === 0) {
-        showFeedback('⚠️ No playlists to sync. Add some first!', 'error', 'playlistFeedback');
-        return;
-      }
-      
-      try {
-        const response = await fetch(API_BASE, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ playlists: playlists })
-        });
-        
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        
         if (data.success) {
-          showFeedback(`✅ Synced successfully (${playlists.length} playlists)`, 'success', 'playlistFeedback');
+          playlists = data.playlists;
+          renderAdminList();
+          updatePlaylistSelect();
           updateApiStatus('connected');
         }
       } catch (error) {
-        showFeedback(`❌ Sync failed: ${error.message}`, 'error', 'playlistFeedback');
-        updateApiStatus('error');
+        showFeedback('❌ Failed to load: ' + error.message, 'error', 'playlistFeedback');
+      }
+    }
+
+    // ----- Load Users -----
+    async function loadUsers() {
+      try {
+        const response = await fetch(API_BASE + '/users');
+        const data = await response.json();
+        if (data.success) {
+          users = data.users;
+          renderUserList();
+          updateUserSelect();
+        }
+      } catch (error) {
+        showFeedback('❌ Failed to load users', 'error', 'userFeedback');
       }
     }
 
     // ----- Add Playlist -----
     async function addPlaylist() {
-      const nameInput = document.getElementById('newPlaylistName');
-      const name = nameInput.value.trim();
-      
+      const name = document.getElementById('newPlaylistName').value.trim();
       if (!name) {
-        showFeedback('⚠️ Please enter a playlist name.', 'error', 'playlistFeedback');
+        showFeedback('⚠️ Enter playlist name', 'error', 'playlistFeedback');
         return;
       }
-      
       try {
-        // Try to add via API
-        const response = await fetch(API_BASE, {
+        const response = await fetch(API_BASE + '/playlists', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, chapters: [] })
+          body: JSON.stringify({ name })
         });
-        
         const data = await response.json();
-        
         if (data.success) {
-          playlists.push(data.playlist);
-          saveData();
-          nameInput.value = '';
-          renderAdminList();
-          showFeedback(`✅ Added playlist "${name}"`, 'success', 'playlistFeedback');
-          updateApiStatus('connected');
-        } else {
-          throw new Error(data.error || 'Failed to add');
+          document.getElementById('newPlaylistName').value = '';
+          showFeedback('✅ Playlist added', 'success', 'playlistFeedback');
+          loadPlaylists();
         }
       } catch (error) {
-        // Fallback: Add locally
-        const newPlaylist = { id: genId(), name: name, chapters: [] };
-        playlists.push(newPlaylist);
-        saveData();
-        nameInput.value = '';
-        renderAdminList();
-        showFeedback(`✅ Added playlist "${name}" (local only)`, 'success', 'playlistFeedback');
+        showFeedback('❌ Failed: ' + error.message, 'error', 'playlistFeedback');
       }
     }
 
     // ----- Add Chapter -----
     async function addChapter() {
-      const playlistSelect = document.getElementById('playlistSelect');
-      const nameInput = document.getElementById('chapterName');
-      const linkInput = document.getElementById('chapterLink');
-      
-      const playlistId = playlistSelect.value;
-      const name = nameInput.value.trim();
-      const link = linkInput.value.trim();
-      
+      const playlistId = document.getElementById('playlistSelect').value;
+      const name = document.getElementById('chapterName').value.trim();
+      const link = document.getElementById('chapterLink').value.trim();
       if (!playlistId || !name || !link) {
-        showFeedback('⚠️ Please fill all fields.', 'error', 'chapterFeedback');
+        showFeedback('⚠️ Fill all fields', 'error', 'chapterFeedback');
         return;
       }
-      
       try {
-        // Try to add via API
-        const response = await fetch(API_BASE + '/chapter', {
+        const response = await fetch(API_BASE + '/playlists/chapter', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ playlistId, chapterName: name, chapterLink: link })
         });
-        
         const data = await response.json();
-        
         if (data.success) {
-          const playlist = playlists.find(p => p.id === playlistId);
-          if (playlist) {
-            playlist.chapters.push(data.chapter);
-            saveData();
-          }
-          nameInput.value = '';
-          linkInput.value = '';
-          renderAdminList();
-          showFeedback(`✅ Added chapter "${name}"`, 'success', 'chapterFeedback');
-          updateApiStatus('connected');
-        } else {
-          throw new Error(data.error || 'Failed to add');
+          document.getElementById('chapterName').value = '';
+          document.getElementById('chapterLink').value = '';
+          showFeedback('✅ Chapter added', 'success', 'chapterFeedback');
+          loadPlaylists();
         }
       } catch (error) {
-        // Fallback: Add locally
-        const playlist = playlists.find(p => p.id === playlistId);
-        if (playlist) {
-          const newChapter = { id: genId(), name: name, link: link };
-          playlist.chapters.push(newChapter);
-          saveData();
-          nameInput.value = '';
-          linkInput.value = '';
-          renderAdminList();
-          showFeedback(`✅ Added chapter "${name}" (local only)`, 'success', 'chapterFeedback');
+        showFeedback('❌ Failed: ' + error.message, 'error', 'chapterFeedback');
+      }
+    }
+
+    // ----- Add User -----
+    async function addUser() {
+      const email = document.getElementById('newUserEmail').value.trim();
+      if (!email) {
+        showFeedback('⚠️ Enter email', 'error', 'userFeedback');
+        return;
+      }
+      try {
+        const response = await fetch(API_BASE + '/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById('newUserEmail').value = '';
+          showFeedback('✅ User added. Key: ' + data.key, 'success', 'userFeedback');
+          loadUsers();
+        } else {
+          showFeedback('❌ ' + data.error, 'error', 'userFeedback');
         }
+      } catch (error) {
+        showFeedback('❌ Failed: ' + error.message, 'error', 'userFeedback');
+      }
+    }
+
+    // ----- Generate Key -----
+    async function generateKey() {
+      const userId = document.getElementById('userSelect').value;
+      if (!userId) {
+        showFeedback('⚠️ Select a user', 'error', 'keyFeedback');
+        return;
+      }
+      try {
+        const response = await fetch(API_BASE + '/keys/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+        const data = await response.json();
+        if (data.success) {
+          const display = document.getElementById('keyDisplay');
+          display.style.display = 'block';
+          display.innerHTML = `🔑 New Key: <strong>${data.key}</strong><br><small>Expires: ${new Date(data.expires_at).toLocaleString()}</small>`;
+          showFeedback('✅ Key generated', 'success', 'keyFeedback');
+          loadUsers();
+        }
+      } catch (error) {
+        showFeedback('❌ Failed: ' + error.message, 'error', 'keyFeedback');
       }
     }
 
     // ----- Delete Playlist -----
-    function deletePlaylist(playlistId) {
-      if (!confirm('Delete this playlist and all its chapters?')) return;
-      
+    async function deletePlaylist(playlistId) {
+      if (!confirm('Delete this playlist and all chapters?')) return;
       try {
-        // Try to delete via API
-        fetch(API_BASE, {
+        await fetch(API_BASE + '/playlists', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ playlistId })
-        }).catch(() => {});
-        
-        playlists = playlists.filter(p => p.id !== playlistId);
-        saveData();
-        renderAdminList();
-        showFeedback('🗑️ Playlist deleted.', 'success', 'playlistFeedback');
+        });
+        loadPlaylists();
+        showFeedback('🗑️ Deleted', 'success', 'playlistFeedback');
       } catch (error) {
-        showFeedback(`❌ Failed to delete: ${error.message}`, 'error', 'playlistFeedback');
+        showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
       }
     }
 
     // ----- Delete Chapter -----
-    function deleteChapter(playlistId, chapterId) {
+    async function deleteChapter(playlistId, chapterId) {
       if (!confirm('Delete this chapter?')) return;
-      
       try {
-        // Try to delete via API
-        fetch(API_BASE + '/chapter', {
+        await fetch(API_BASE + '/playlists/chapter', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ playlistId, chapterId })
-        }).catch(() => {});
-        
-        const playlist = playlists.find(p => p.id === playlistId);
-        if (playlist) {
-          playlist.chapters = playlist.chapters.filter(c => c.id !== chapterId);
-          saveData();
-        }
-        renderAdminList();
-        showFeedback('🗑️ Chapter deleted.', 'success', 'playlistFeedback');
+        });
+        loadPlaylists();
+        showFeedback('🗑️ Deleted', 'success', 'playlistFeedback');
       } catch (error) {
-        showFeedback(`❌ Failed to delete: ${error.message}`, 'error', 'playlistFeedback');
+        showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
+      }
+    }
+
+    // ----- Delete User -----
+    async function deleteUser(userId) {
+      if (!confirm('Delete this user and all their keys?')) return;
+      try {
+        await fetch(API_BASE + '/users', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+        loadUsers();
+        showFeedback('🗑️ User deleted', 'success', 'userFeedback');
+      } catch (error) {
+        showFeedback('❌ Failed to delete', 'error', 'userFeedback');
       }
     }
 
     // ----- Render Functions -----
-    function updatePlaylistSelect() {
-      const select = document.getElementById('playlistSelect');
-      if (!select) return;
-      const currentValue = select.value;
-      select.innerHTML = '<option value="">Select a playlist</option>';
-      playlists.forEach(p => {
-        const option = document.createElement('option');
-        option.value = p.id;
-        option.textContent = p.name;
-        select.appendChild(option);
-      });
-      if (currentValue && playlists.some(p => p.id === currentValue)) {
-        select.value = currentValue;
-      }
-    }
-
     function renderAdminList() {
       const list = document.getElementById('adminList');
       if (!playlists.length) {
-        list.innerHTML = `<div class="empty-state">No playlists yet. Add one above.</div>`;
+        list.innerHTML = `<div class="empty-state">No playlists</div>`;
         return;
       }
-      
       let html = '';
       playlists.forEach(playlist => {
         html += `
           <div class="playlist-header">
             📁 ${playlist.name}
-            <button class="del-btn" onclick="window.deletePlaylist('${playlist.id}')" style="background:none;border:none;color:#b33a3a;font-size:1.2rem;cursor:pointer;">✕</button>
+            <button class="del-btn" onclick="window.deletePlaylist('${playlist.id}')">✕</button>
           </div>
         `;
-        
-        if (playlist.chapters && playlist.chapters.length > 0) {
+        if (playlist.chapters?.length) {
           playlist.chapters.forEach(chapter => {
             html += `
               <div class="entry-item" style="padding-left:32px;">
@@ -379,6 +380,52 @@
       list.innerHTML = html;
     }
 
+    function renderUserList() {
+      const list = document.getElementById('userList');
+      if (!users.length) {
+        list.innerHTML = `<div class="empty-state">No users</div>`;
+        return;
+      }
+      let html = '';
+      users.forEach(user => {
+        html += `
+          <div class="entry-item">
+            <div class="info">
+              <span class="name">${user.email}</span>
+              <span class="sub">ID: ${user.id}</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="key-btn" onclick="window.viewKeys('${user.id}')">🔑 Keys</button>
+              <button class="del-btn" onclick="window.deleteUser('${user.id}')">✕</button>
+            </div>
+          </div>
+        `;
+      });
+      list.innerHTML = html;
+    }
+
+    function updatePlaylistSelect() {
+      const select = document.getElementById('playlistSelect');
+      select.innerHTML = '<option value="">Select playlist</option>';
+      playlists.forEach(p => {
+        select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+      });
+    }
+
+    function updateUserSelect() {
+      const select = document.getElementById('userSelect');
+      select.innerHTML = '<option value="">Select user</option>';
+      users.forEach(u => {
+        select.innerHTML += `<option value="${u.id}">${u.email}</option>`;
+      });
+    }
+
+    function updateApiStatus(mode) {
+      const el = document.getElementById('apiStatus');
+      el.textContent = '🗄️ D1 Database ' + (mode === 'connected' ? '✅' : '');
+      if (mode === 'connected') el.classList.add('status-connected');
+    }
+
     function showFeedback(msg, type, elId) {
       const el = document.getElementById(elId);
       if (!el) return;
@@ -386,23 +433,26 @@
       el.className = 'toast-msg';
       if (type === 'error') el.classList.add('toast-error');
       else if (type === 'success') el.classList.add('toast-success');
-      setTimeout(() => { el.textContent = ''; el.className = 'toast-msg'; }, 4000);
+      else el.classList.add('toast-info');
+      setTimeout(() => { el.textContent = ''; el.className = 'toast-msg'; }, 5000);
     }
 
-    function updateApiStatus(mode) {
-      const el = document.getElementById('apiStatus');
-      if (!el) return;
-      if (mode === 'local') {
-        el.textContent = '🌐 API: local storage';
-        el.className = 'api-status';
-      } else if (mode === 'connected') {
-        el.textContent = '🌐 API: Cloudflare connected';
-        el.className = 'api-status status-connected';
-      } else if (mode === 'error') {
-        el.textContent = '⚠️ API: error';
-        el.className = 'api-status status-error';
+    // ----- View Keys (Simple Alert) -----
+    window.viewKeys = async function(userId) {
+      try {
+        const response = await fetch(API_BASE + '/keys?userId=' + userId);
+        const data = await response.json();
+        if (data.success) {
+          let msg = '🔑 Keys for this user:\n\n';
+          data.keys.forEach(k => {
+            msg += `Key: ${k.key_value}\nUsed: ${k.is_used ? '✅ Used' : '❌ Not used'}\nExpires: ${new Date(k.expires_at).toLocaleString()}\n\n`;
+          });
+          alert(msg);
+        }
+      } catch (error) {
+        alert('Failed to load keys');
       }
-    }
+    };
 
     // ----- Auth -----
     function setupAuth() {
@@ -417,9 +467,8 @@
           passwordGate.style.display = 'none';
           adminContent.style.display = 'block';
           pwdError.textContent = '';
-          isUnlocked = true;
-          loadData();
-          renderAdminList();
+          loadPlaylists();
+          loadUsers();
         } else {
           pwdError.textContent = '❌ Incorrect password.';
           pwdInput.value = '';
@@ -435,24 +484,30 @@
         adminContent.style.display = 'none';
         pwdInput.value = '';
         pwdError.textContent = '';
-        isUnlocked = false;
       });
     }
 
-    // ----- Init -----
-    // Make functions globally accessible
+    // ----- Make functions globally accessible -----
     window.deletePlaylist = deletePlaylist;
     window.deleteChapter = deleteChapter;
+    window.deleteUser = deleteUser;
 
+    // ----- Event Listeners -----
     document.getElementById('addPlaylistBtn').addEventListener('click', addPlaylist);
     document.getElementById('addChapterBtn').addEventListener('click', addChapter);
-    document.getElementById('syncApiBtn').addEventListener('click', syncToCloudflare);
-    document.getElementById('loadApiBtn').addEventListener('click', loadFromCloudflare);
+    document.getElementById('addUserBtn').addEventListener('click', addUser);
+    document.getElementById('generateKeyBtn').addEventListener('click', generateKey);
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      loadPlaylists();
+      loadUsers();
+      showFeedback('🔄 Refreshed', 'info', 'playlistFeedback');
+    });
 
     // Enter key support
     document.getElementById('newPlaylistName').addEventListener('keydown', e => { if (e.key === 'Enter') addPlaylist(); });
     document.getElementById('chapterName').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
     document.getElementById('chapterLink').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
+    document.getElementById('newUserEmail').addEventListener('keydown', e => { if (e.key === 'Enter') addUser(); });
 
     setupAuth();
     console.log('✅ Admin panel loaded. Password: admin123');
