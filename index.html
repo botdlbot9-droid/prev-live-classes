@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Portal - Playlists</title>
+  <title>Video Portal</title>
   <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
   <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js"></script>
@@ -11,126 +11,147 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
     .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
-    .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; }
+    .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
     .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; }
+    
+    /* Login Form */
+    .login-container { max-width: 450px; margin: 40px auto; padding: 30px; background: #f8faff; border-radius: 24px; border: 1px solid #e6edf6; }
+    .login-container h2 { margin-bottom: 20px; color: #0b1a33; }
+    .login-container input { width: 100%; padding: 12px 16px; border: 1px solid #d9e1ec; border-radius: 16px; font-size: 0.95rem; margin-bottom: 12px; }
+    .login-container button { width: 100%; padding: 12px; background: #0b1a33; color: white; border: none; border-radius: 16px; font-weight: 600; cursor: pointer; }
+    .login-container .error { color: #b33a3a; font-size: 0.9rem; margin-top: 8px; }
+    
     .playlist-selector { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; padding: 16px; background: #f8faff; border-radius: 20px; }
-    .playlist-btn { padding: 10px 24px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; color: #1a2b4c; font-weight: 500; cursor: pointer; transition: 0.15s; font-size: 0.95rem; }
+    .playlist-btn { padding: 10px 24px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; color: #1a2b4c; font-weight: 500; cursor: pointer; transition: 0.15s; }
     .playlist-btn:hover { border-color: #1a2b4c; background: #f0f4fe; }
     .playlist-btn.active { border-color: #1a2b4c; background: #1a2b4c; color: white; }
     .chapter-item { background: #fafdff; border-radius: 20px; padding: 16px 22px; margin-bottom: 14px; border: 1px solid #e6edf6; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-    .chapter-item:hover { border-color: #c8d4e4; }
     .chapter-number { font-weight: 700; color: #1a2b4c; font-size: 1.1rem; min-width: 80px; }
     .chapter-name { font-weight: 600; font-size: 1.1rem; color: #0b1a33; flex: 1; }
     .play-btn { background: #0b1a33; color: white; border: none; border-radius: 40px; padding: 8px 24px; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: 0.15s; }
-    .play-btn:hover { background: #1f3457; transform: scale(1.02); }
+    .play-btn:hover { background: #1f3457; }
     .player-wrapper { width: 100%; margin-top: 12px; border-radius: 16px; overflow: hidden; background: #000; }
     .empty-state { color: #6a7c94; padding: 40px 0; text-align: center; font-style: italic; }
     .playlist-title { font-size: 1.4rem; font-weight: 600; color: #0b1a33; margin-bottom: 16px; }
-    .footer-note { color: #7c8aa0; font-size: 0.8rem; text-align: center; margin-top: 30px; border-top: 1px solid #eef2f6; padding-top: 22px; }
-    .loading { text-align: center; padding: 40px; color: #4c637f; }
-    .status-bar { font-size: 0.8rem; color: #4c637f; padding: 8px 16px; background: #f0f4fb; border-radius: 40px; display: inline-block; margin-bottom: 16px; }
+    .status-bar { font-size: 0.8rem; padding: 8px 16px; border-radius: 40px; display: inline-block; margin-bottom: 16px; background: #f0f4fb; color: #4c637f; }
+    .user-info { font-size: 0.85rem; color: #4c637f; }
+    .logout-btn { background: none; border: 1px solid #d9e1ec; padding: 6px 16px; border-radius: 40px; cursor: pointer; }
+    .logout-btn:hover { background: #fee; border-color: #b33a3a; }
   </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
     <h1>📽️ Video Portal</h1>
+    <div id="userInfo" class="user-info"></div>
   </div>
   
-  <div id="statusBar" class="status-bar">🔄 Loading...</div>
-  
-  <div id="playlistSelector" class="playlist-selector">
-    <div class="loading">Loading playlists...</div>
+  <!-- Login Form -->
+  <div id="loginContainer" class="login-container">
+    <h2>🔐 Login to Access Videos</h2>
+    <p style="color:#4c637f; margin-bottom:16px;">Enter your email and access key</p>
+    <input type="email" id="loginEmail" placeholder="Enter your email" />
+    <input type="text" id="loginKey" placeholder="Enter your access key" />
+    <button id="loginBtn">Login</button>
+    <div id="loginError" class="error"></div>
+  </div>
+
+  <!-- Video Content (hidden until login) -->
+  <div id="videoContent" style="display: none;">
+    <div id="statusBar" class="status-bar">🔄 Loading videos...</div>
+    <div id="playlistSelector" class="playlist-selector">
+      <div class="empty-state">Loading playlists...</div>
+    </div>
+    <div id="chaptersContainer">
+      <div class="empty-state">Select a playlist to view chapters</div>
+    </div>
   </div>
   
-  <div id="chaptersContainer">
-    <div class="empty-state">Select a playlist to view chapters</div>
+  <div class="footer-note" style="color:#7c8aa0; font-size:0.8rem; text-align:center; margin-top:30px; border-top:1px solid #eef2f6; padding-top:22px;">
+    ⬇️ Click Play on any chapter → video.js + hls.js player
   </div>
-  
-  <div class="footer-note">⬇️ Click Play on any chapter → video.js + hls.js player</div>
 </div>
 
 <script>
   (function() {
-    // ----- CONFIG -----
-    const API_BASE = 'http://video-play-api.newstreamcp.workers.dev/api/playlists';
-    const STORAGE_KEY = 'playlistData';
-
+    const API_BASE = 'http://video-play-api.newstreamcp.workers.dev/api';
     let playlists = [];
     let currentPlaylistId = null;
+    let currentUser = null;
 
-    // ----- Load from localStorage -----
-    function loadFromStorage() {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          playlists = JSON.parse(stored);
-          if (!Array.isArray(playlists)) playlists = [];
-        } else {
-          // Demo data
-          playlists = [
-            {
-              id: 'pl_demo1',
-              name: 'Trigonometry',
-              chapters: [
-                { id: 'ch1', name: 'Chapter 1: Introduction to Trigonometry', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
-                { id: 'ch2', name: 'Chapter 2: Trigonometric Ratios', link: 'https://www.w3schools.com/html/mov_bbb.mp4' }
-              ]
-            }
-          ];
-          saveToStorage();
-        }
-      } catch (e) {
-        playlists = [];
+    // ----- Login -----
+    async function login() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const key = document.getElementById('loginKey').value.trim();
+      const errorEl = document.getElementById('loginError');
+
+      if (!email || !key) {
+        errorEl.textContent = '⚠️ Please enter both email and key';
+        return;
       }
-    }
 
-    function saveToStorage() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists));
-    }
-
-    // ----- Fetch from Cloudflare API -----
-    async function fetchFromCloudflare() {
-      const statusBar = document.getElementById('statusBar');
       try {
-        statusBar.textContent = '🔄 Syncing with Cloudflare...';
-        
-        const response = await fetch(API_BASE);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
+        const response = await fetch(API_BASE + '/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, key })
+        });
+
         const data = await response.json();
-        
-        if (data.success && data.playlists && Array.isArray(data.playlists)) {
-          if (data.playlists.length > 0) {
-            playlists = data.playlists;
-            saveToStorage();
-            statusBar.textContent = '✅ Connected to Cloudflare';
-            statusBar.style.background = '#e6f5e6';
-            statusBar.style.color = '#1a5d3c';
-          } else {
-            statusBar.textContent = '📭 No playlists on Cloudflare. Using local data.';
-            statusBar.style.background = '#fff3cd';
-            statusBar.style.color = '#856404';
-            loadFromStorage();
-          }
+
+        if (data.success) {
+          currentUser = data.user;
+          document.getElementById('loginContainer').style.display = 'none';
+          document.getElementById('videoContent').style.display = 'block';
+          document.getElementById('userInfo').innerHTML = `
+            👤 ${data.user.email} 
+            <button class="logout-btn" onclick="window.logout()">Logout</button>
+          `;
+          fetchPlaylists();
         } else {
-          throw new Error('Invalid data format');
+          errorEl.textContent = '❌ ' + (data.error || 'Login failed');
         }
       } catch (error) {
-        console.warn('Cloudflare fetch failed, using local data:', error);
-        statusBar.textContent = '⚠️ Using local storage (Cloudflare unavailable)';
-        statusBar.style.background = '#fee';
-        statusBar.style.color = '#b33a3a';
-        loadFromStorage();
+        errorEl.textContent = '❌ Connection error: ' + error.message;
       }
-      renderPlaylists();
+    }
+
+    // ----- Logout -----
+    window.logout = function() {
+      currentUser = null;
+      document.getElementById('loginContainer').style.display = 'block';
+      document.getElementById('videoContent').style.display = 'none';
+      document.getElementById('userInfo').innerHTML = '';
+      document.getElementById('loginEmail').value = '';
+      document.getElementById('loginKey').value = '';
+      document.getElementById('loginError').textContent = '';
+    };
+
+    // ----- Fetch Playlists -----
+    async function fetchPlaylists() {
+      const statusBar = document.getElementById('statusBar');
+      try {
+        statusBar.textContent = '🔄 Fetching videos...';
+        const response = await fetch(API_BASE + '/playlists');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          playlists = data.playlists;
+          statusBar.textContent = `✅ ${playlists.length} playlists loaded`;
+          renderPlaylists();
+        }
+      } catch (error) {
+        statusBar.textContent = '❌ Failed to load videos';
+        console.error(error);
+      }
     }
 
     // ----- Render Playlists -----
     function renderPlaylists() {
       const container = document.getElementById('playlistSelector');
       if (!playlists.length) {
-        container.innerHTML = `<div class="empty-state">No playlists available.</div>`;
+        container.innerHTML = `<div class="empty-state">No playlists available</div>`;
         document.getElementById('chaptersContainer').innerHTML = `<div class="empty-state">No playlists available</div>`;
         return;
       }
@@ -154,8 +175,6 @@
         currentPlaylistId = playlists[0].id;
         renderPlaylists();
         renderChapters(currentPlaylistId);
-      } else if (currentPlaylistId) {
-        renderChapters(currentPlaylistId);
       }
     }
 
@@ -178,10 +197,10 @@
       playlist.chapters.forEach((chapter, index) => {
         const playerId = `player-${chapter.id || 'ch_' + Date.now()}`;
         html += `
-          <div class="chapter-item" data-id="${chapter.id}">
+          <div class="chapter-item">
             <span class="chapter-number">Chapter ${index + 1}</span>
             <span class="chapter-name">${chapter.name}</span>
-            <button class="play-btn" data-player-id="${playerId}" data-link="${chapter.link}" data-chapter="${chapter.name}">▶ Play</button>
+            <button class="play-btn" data-player-id="${playerId}" data-link="${chapter.link}">▶ Play</button>
             <div class="player-wrapper" id="wrapper-${playerId}" style="display: none;">
               <video id="${playerId}" class="video-js vjs-default-skin" controls preload="auto" width="100%" height="auto"></video>
             </div>
@@ -190,7 +209,6 @@
       });
       container.innerHTML = html;
 
-      // Play button events
       container.querySelectorAll('.play-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const playerId = this.dataset.playerId;
@@ -208,7 +226,6 @@
           }
           
           wrapper.style.display = 'block';
-          
           if (window[`player_${playerId}`]) {
             try { window[`player_${playerId}`].dispose(); } catch(e) {}
             delete window[`player_${playerId}`];
@@ -239,14 +256,12 @@
       });
     }
 
-    // ----- Init -----
-    loadFromStorage();
-    renderPlaylists();
-    
-    // Try to fetch from Cloudflare
-    setTimeout(fetchFromCloudflare, 500);
+    // ----- Event Listeners -----
+    document.getElementById('loginBtn').addEventListener('click', login);
+    document.getElementById('loginKey').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+    document.getElementById('loginEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
 
-    // Dispose players on unload
+    // ----- Dispose players on unload -----
     window.addEventListener('beforeunload', function() {
       for (let key in window) {
         if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
