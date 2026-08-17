@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Classplus Video Player - Complete</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Classplus Video Player</title>
 
     <!-- Video.js CDN -->
     <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
@@ -14,776 +14,390 @@
     </script>
 
     <style>
-        /* ===== RESET & BASE ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             background: #0d1117;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
-            padding: 16px;
+            font-family: system-ui, sans-serif;
+            padding: 20px;
         }
-
-        /* ===== PLAYER WRAPPER ===== */
         .player-wrapper {
-            max-width: 960px;
+            max-width: 900px;
             width: 100%;
             background: #161b22;
-            border-radius: 24px;
+            border-radius: 20px;
             padding: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-            border: 1px solid #30363d;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
         }
-
-        /* ===== HEADER ===== */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 18px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
         .video-title {
             color: #f0f6fc;
-            font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .video-title .badge {
-            font-size: 0.6rem;
-            background: #238636;
-            padding: 2px 12px;
-            border-radius: 40px;
+            font-size: 1.2rem;
             font-weight: 600;
-            color: white;
-            letter-spacing: 0.3px;
+            margin-bottom: 16px;
+            padding-left: 8px;
         }
-
-        .video-title .badge.proxy {
-            background: #1f6feb;
-        }
-
-        /* ===== VIDEO PLAYER ===== */
         .video-js {
             width: 100%;
             height: auto;
             aspect-ratio: 16 / 9;
-            border-radius: 14px;
+            border-radius: 12px;
             overflow: hidden;
             background: #000;
-            box-shadow: inset 0 0 0 1px #30363d;
         }
-
-        /* ===== CONTROL BAR ===== */
-        .control-bar {
-            margin-top: 16px;
+        .status-bar {
+            margin-top: 14px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            background: #21262d;
+            color: #8b949e;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
-            background: #21262d;
-            padding: 12px 18px;
-            border-radius: 14px;
-            border: 1px solid #30363d;
+            gap: 10px;
         }
-
-        .status-text {
-            font-size: 0.9rem;
-            color: #8b949e;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-            min-width: 150px;
+        .status-bar .success {
+            color: #3fb950;
         }
-
-        .status-text .dot {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
+        .status-bar .error {
+            color: #f85149;
         }
-
-        .status-text .dot.loading {
-            background: #d29922;
-            animation: pulse 1s infinite;
+        .status-bar .loading {
+            color: #d29922;
         }
-        .status-text .dot.success {
-            background: #3fb950;
-        }
-        .status-text .dot.error {
-            background: #f85149;
-        }
-        .status-text .dot.idle {
-            background: #8b949e;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.8); }
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 8px 22px;
-            border: none;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
         .btn-retry {
             background: #238636;
+            border: none;
             color: white;
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
         }
         .btn-retry:hover {
             background: #2ea043;
-            transform: scale(1.02);
         }
         .btn-retry:disabled {
-            opacity: 0.4;
+            opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
-
-        .btn-reset {
-            background: #21262d;
-            color: #8b949e;
-            border: 1px solid #30363d;
-        }
-        .btn-reset:hover {
-            background: #30363d;
-            color: #f0f6fc;
-        }
-
-        /* ===== DEBUG INFO ===== */
-        .debug-section {
-            margin-top: 12px;
+        .debug-info {
             font-size: 0.75rem;
             color: #484f58;
-            background: #0d1117;
-            border-radius: 10px;
-            padding: 10px 14px;
-            border: 1px solid #21262d;
+            margin-top: 8px;
             word-break: break-all;
-            font-family: 'SF Mono', 'Fira Code', monospace;
-            line-height: 1.5;
-            max-height: 80px;
-            overflow-y: auto;
-        }
-
-        .debug-section .label {
-            color: #8b949e;
-            font-weight: 600;
-            margin-right: 6px;
-        }
-
-        .debug-section .url {
-            color: #58a6ff;
-        }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 640px) {
-            .player-wrapper {
-                padding: 16px;
-                border-radius: 16px;
-            }
-            .video-title {
-                font-size: 1rem;
-            }
-            .video-title .badge {
-                font-size: 0.5rem;
-                padding: 1px 10px;
-            }
-            .control-bar {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 10px;
-                padding: 12px 14px;
-            }
-            .btn-group {
-                justify-content: stretch;
-            }
-            .btn {
-                flex: 1;
-                justify-content: center;
-                padding: 10px 16px;
-                font-size: 0.8rem;
-            }
-            .status-text {
-                font-size: 0.8rem;
-            }
-            .debug-section {
-                font-size: 0.65rem;
-                max-height: 60px;
-                padding: 8px 12px;
-            }
-        }
-
-        @media (max-width: 400px) {
-            .player-wrapper {
-                padding: 10px;
-                border-radius: 12px;
-            }
-            .video-title {
-                font-size: 0.85rem;
-            }
-            .btn {
-                font-size: 0.7rem;
-                padding: 8px 12px;
-            }
+            padding: 6px 12px;
+            background: #0d1117;
+            border-radius: 8px;
+            border: 1px solid #21262d;
         }
     </style>
 </head>
 <body>
 
     <div class="player-wrapper">
+        <div class="video-title">📺 Classplus Video</div>
 
-        <!-- ===== HEADER ===== -->
-        <div class="header">
-            <div class="video-title">
-                📺 Video Player
-                <span class="badge">HLS</span>
-                <span class="badge proxy">CORS Proxy</span>
-            </div>
-        </div>
-
-        <!-- ===== VIDEO PLAYER ===== -->
+        <!-- Video Player -->
         <video id="my-video" class="video-js vjs-default-skin" controls preload="auto" playsinline>
             <p class="vjs-no-js">Please enable JavaScript to view this video.</p>
         </video>
 
-        <!-- ===== CONTROL BAR ===== -->
-        <div class="control-bar">
-            <div class="status-text" id="statusText">
-                <span class="dot idle" id="statusDot"></span>
-                <span id="statusMessage">⏳ Initializing player...</span>
-            </div>
-            <div class="btn-group">
-                <button class="btn btn-retry" id="retryBtn">🔄 Retry</button>
-                <button class="btn btn-reset" id="resetBtn">⟳ Reset Player</button>
-            </div>
+        <!-- Status Bar -->
+        <div class="status-bar" id="statusBar">
+            <span id="statusText">⏳ Initializing player...</span>
+            <button class="btn-retry" id="retryBtn">🔄 Retry</button>
         </div>
 
-        <!-- ===== DEBUG INFO ===== -->
-        <div class="debug-section" id="debugInfo">
-            <span class="label">🔍 Debug:</span>
-            <span id="debugText">Waiting for video...</span>
-        </div>
-
+        <!-- Debug Info -->
+        <div class="debug-info" id="debugInfo">🔍 Waiting for video...</div>
     </div>
 
-    <!-- ========================================================== -->
-    <!-- ======================== JAVASCRIPT ======================== -->
-    <!-- ========================================================== -->
     <script>
-        (function() {
-            'use strict';
+        // ============================================================
+        //  CONFIG – CHANGE YOUR VIDEO URL HERE
+        // ============================================================
+        const VIDEO_URL =
+            'https://vs.classplusapp.com/hls/6a7c17d170851ec23806f9f2/720p20.m3u8';
 
-            // ============================================================
-            //  CONFIG – CHANGE YOUR VIDEO URL HERE
-            // ============================================================
-            const VIDEO_URL =
-                'https://vs.classplusapp.com/hls/6a7c17d170851ec23806f9f2/720p20.m3u8';
+        // CORS proxies (try in order)
+        const PROXIES = [
+            'https://corsproxy.io/?',
+            'https://api.allorigins.win/raw?url=',
+            'https://cors-anywhere.herokuapp.com/'
+        ];
 
-            // CORS proxies (try in order)
-            const PROXIES = [
-                'https://corsproxy.io/?',
-                'https://api.allorigins.win/raw?url=',
-                'https://cors-anywhere.herokuapp.com/'
-            ];
+        // ============================================================
+        //  DOM REFS
+        // ============================================================
+        const videoEl = document.getElementById('my-video');
+        const statusText = document.getElementById('statusText');
+        const debugInfo = document.getElementById('debugInfo');
+        const retryBtn = document.getElementById('retryBtn');
 
-            // Referer URLs to try
-            const REFERERS = [
-                'https://classplusapp.com/',
-                'https://vs.classplusapp.com/',
-                'https://www.classplusapp.com/',
-                document.location.origin
-            ];
+        let player = null;
+        let hlsInstance = null;
+        let currentAttempt = 0;
+        let isPlaying = false;
 
-            // ============================================================
-            //  DOM REFS
-            // ============================================================
-            const videoEl = document.getElementById('my-video');
-            const statusMessage = document.getElementById('statusMessage');
-            const statusDot = document.getElementById('statusDot');
-            const debugText = document.getElementById('debugText');
-            const retryBtn = document.getElementById('retryBtn');
-            const resetBtn = document.getElementById('resetBtn');
+        // ============================================================
+        //  STATUS HELPER
+        // ============================================================
+        function setStatus(msg, type = 'loading') {
+            statusText.innerHTML = msg;
+            statusText.className = type;
+        }
 
-            let player = null;
-            let hlsInstance = null;
-            let currentAttempt = 0;
-            let isPlaying = false;
-            let isDestroyed = false;
-            let loadInProgress = false;
+        function setDebug(msg) {
+            debugInfo.textContent = '🔍 ' + msg;
+        }
 
-            // ============================================================
-            //  STATUS HELPER
-            // ============================================================
-            function setStatus(msg, type) {
-                statusMessage.textContent = msg;
-                statusDot.className = 'dot';
-                if (type === 'loading') {
-                    statusDot.classList.add('loading');
-                } else if (type === 'success') {
-                    statusDot.classList.add('success');
-                } else if (type === 'error') {
-                    statusDot.classList.add('error');
-                } else {
-                    statusDot.classList.add('idle');
-                }
+        // ============================================================
+        //  DESTROY OLD PLAYER / HLS
+        // ============================================================
+        function destroyPlayer() {
+            if (hlsInstance) {
+                try { hlsInstance.destroy(); } catch (e) {}
+                hlsInstance = null;
             }
-
-            function setDebug(msg) {
-                debugText.textContent = msg;
+            if (player) {
+                try { player.dispose(); } catch (e) {}
+                player = null;
             }
+            // Reset video element
+            videoEl.removeAttribute('src');
+            videoEl.load();
+        }
 
-            // ============================================================
-            //  DESTROY OLD PLAYER / HLS
-            // ============================================================
-            function destroyPlayer() {
-                isDestroyed = true;
-                if (hlsInstance) {
-                    try {
-                        hlsInstance.destroy();
-                    } catch (e) { /* ignore */ }
-                    hlsInstance = null;
+        // ============================================================
+        //  METHOD 1: HLS.js DIRECT (with Referer headers)
+        // ============================================================
+        function loadWithHlsJs(url, referer = 'https://classplusapp.com/') {
+            return new Promise((resolve, reject) => {
+                if (!Hls.isSupported()) {
+                    reject(new Error('HLS.js not supported in this browser'));
+                    return;
                 }
-                if (player) {
-                    try {
-                        player.dispose();
-                    } catch (e) { /* ignore */ }
-                    player = null;
-                }
-                // Reset video element
-                try {
-                    videoEl.pause();
-                    videoEl.removeAttribute('src');
-                    videoEl.load();
-                } catch (e) { /* ignore */ }
-                isPlaying = false;
-                isDestroyed = false;
-            }
 
-            // ============================================================
-            //  METHOD 1: HLS.js DIRECT (with Referer headers)
-            // ============================================================
-            function loadWithHlsJs(url, referer) {
-                return new Promise((resolve, reject) => {
-                    if (!Hls || !Hls.isSupported()) {
-                        reject(new Error('HLS.js not supported in this browser'));
-                        return;
-                    }
+                setStatus('📡 Loading with HLS.js...', 'loading');
+                setDebug(`HLS.js: ${url.substring(0, 80)}...`);
 
-                    setStatus('📡 Loading with HLS.js...', 'loading');
-                    setDebug(`HLS.js (Referer: ${referer})`);
-
-                    const hls = new Hls({
-                        enableWorker: true,
-                        lowLatencyMode: true,
-                        maxBufferLength: 30,
-                        maxMaxBufferLength: 60,
-                        xhrSetup: function(xhr, xhrUrl) {
-                            // Add important headers
-                            xhr.setRequestHeader('Referer', referer);
-                            xhr.setRequestHeader('Origin', referer);
-                            xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-                            // If you have cookies, add here:
-                            // xhr.setRequestHeader('Cookie', 'your_cookie_here');
-                        }
-                    });
-
-                    let manifestLoaded = false;
-
-                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                        manifestLoaded = true;
-                        setStatus('✅ Manifest loaded – playing...', 'success');
-                        setDebug('✅ HLS.js: Manifest parsed successfully');
-                        isPlaying = true;
-                        resolve(hls);
-                    });
-
-                    hls.on(Hls.Events.ERROR, function(event, data) {
-                        if (data.fatal) {
-                            reject(new Error('HLS.js fatal error: ' + (data.details || 'unknown')));
-                        } else {
-                            setDebug('⚠️ HLS.js non-fatal: ' + data.details);
-                        }
-                    });
-
-                    // Timeout fallback
-                    const timeoutId = setTimeout(() => {
-                        if (!manifestLoaded) {
-                            reject(new Error('HLS.js: Manifest load timeout (30s)'));
-                        }
-                    }, 30000);
-
-                    // Store reference
-                    hlsInstance = hls;
-
-                    try {
-                        hls.loadSource(url);
-                        hls.attachMedia(videoEl);
-                    } catch (err) {
-                        clearTimeout(timeoutId);
-                        reject(err);
+                const hls = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    xhrSetup: function(xhr, xhrUrl) {
+                        // Add important headers
+                        xhr.setRequestHeader('Referer', referer);
+                        xhr.setRequestHeader('Origin', 'https://classplusapp.com');
+                        xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+                        // If you have cookies, add here:
+                        // xhr.setRequestHeader('Cookie', 'your_cookie_here');
                     }
                 });
-            }
 
-            // ============================================================
-            //  METHOD 2: Video.js + CORS Proxy
-            // ============================================================
-            function loadWithVideoJsProxy(proxyUrl, originalUrl) {
-                return new Promise((resolve, reject) => {
-                    const finalUrl = proxyUrl + encodeURIComponent(originalUrl);
-
-                    setStatus('🌐 Loading via CORS proxy...', 'loading');
-                    setDebug(`Video.js + Proxy: ${proxyUrl.substring(0, 40)}...`);
-
-                    // Destroy any existing Video.js player
-                    if (player) {
-                        try { player.dispose(); } catch (e) {}
-                        player = null;
-                    }
-
-                    const newPlayer = videojs(videoEl, {
-                        controls: true,
-                        autoplay: false,
-                        fluid: true,
-                        html5: {
-                            hls: {
-                                enableLowInitialPlaylist: true,
-                                smoothQualityChange: true,
-                                overrideNative: true,
-                            }
-                        },
-                        sources: [{
-                            src: finalUrl,
-                            type: 'application/x-mpegURL'
-                        }]
-                    });
-
-                    let readyCalled = false;
-
-                    newPlayer.ready(function() {
-                        if (!readyCalled) {
-                            readyCalled = true;
-                            setStatus('✅ Video.js ready – playing...', 'success');
-                            setDebug('✅ Video.js: Player ready');
-                            isPlaying = true;
-                            player = newPlayer;
-                            resolve(newPlayer);
-                        }
-                    });
-
-                    newPlayer.on('error', function() {
-                        const err = newPlayer.error();
-                        if (!readyCalled) {
-                            reject(new Error('Video.js error: ' + (err ? err.message : 'unknown')));
-                        }
-                    });
-
-                    // Timeout fallback
-                    const timeoutId = setTimeout(() => {
-                        if (!readyCalled) {
-                            reject(new Error('Video.js: Player ready timeout (15s)'));
-                        }
-                    }, 15000);
-
-                    // Store reference
-                    player = newPlayer;
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    setStatus('✅ Manifest loaded – playing...', 'success');
+                    setDebug('✅ HLS.js: Manifest parsed successfully');
+                    isPlaying = true;
+                    resolve(hls);
                 });
-            }
 
-            // ============================================================
-            //  METHOD 3: Native HLS (Safari) + CORS Proxy
-            // ============================================================
-            function loadNativeHls(proxyUrl, originalUrl) {
-                return new Promise((resolve, reject) => {
-                    const finalUrl = proxyUrl + encodeURIComponent(originalUrl);
-
-                    setStatus('🍎 Native HLS + proxy...', 'loading');
-                    setDebug(`Native HLS: ${finalUrl.substring(0, 80)}...`);
-
-                    videoEl.src = finalUrl;
-                    videoEl.load();
-
-                    let resolved = false;
-
-                    const playPromise = videoEl.play();
-                    if (playPromise !== undefined) {
-                        playPromise
-                            .then(() => {
-                                if (!resolved) {
-                                    resolved = true;
-                                    setStatus('✅ Native HLS playing', 'success');
-                                    setDebug('✅ Native HLS: playing');
-                                    isPlaying = true;
-                                    resolve(videoEl);
-                                }
-                            })
-                            .catch((err) => {
-                                if (!resolved) {
-                                    resolved = true;
-                                    reject(new Error('Native play failed: ' + err.message));
-                                }
-                            });
+                hls.on(Hls.Events.ERROR, function(event, data) {
+                    if (data.fatal) {
+                        reject(new Error('HLS.js fatal error: ' + JSON.stringify(data)));
                     } else {
-                        // Some browsers return undefined
-                        let checkCount = 0;
-                        const checkInterval = setInterval(() => {
-                            checkCount++;
-                            if (!videoEl.paused) {
-                                clearInterval(checkInterval);
-                                if (!resolved) {
-                                    resolved = true;
-                                    setStatus('✅ Native HLS playing', 'success');
-                                    setDebug('✅ Native HLS: playing (fallback)');
-                                    isPlaying = true;
-                                    resolve(videoEl);
-                                }
-                            } else if (checkCount > 15) {
-                                clearInterval(checkInterval);
-                                if (!resolved) {
-                                    resolved = true;
-                                    reject(new Error('Native HLS: playback not started after 15s'));
-                                }
-                            }
-                        }, 1000);
+                        setDebug('⚠️ HLS.js non-fatal: ' + data.type);
                     }
-
-                    // Error event
-                    videoEl.onerror = function() {
-                        if (!resolved) {
-                            resolved = true;
-                            reject(new Error('Native HLS error: ' + (videoEl.error ? videoEl.error.message : 'unknown')));
-                        }
-                    };
                 });
+
+                hls.loadSource(url);
+                hls.attachMedia(videoEl);
+
+                // Store reference
+                hlsInstance = hls;
+            });
+        }
+
+        // ============================================================
+        //  METHOD 2: Video.js + CORS Proxy
+        // ============================================================
+        function loadWithVideoJsProxy(proxyUrl, originalUrl) {
+            return new Promise((resolve, reject) => {
+                const finalUrl = proxyUrl + encodeURIComponent(originalUrl);
+
+                setStatus('🌐 Loading via CORS proxy...', 'loading');
+                setDebug(`Proxy: ${proxyUrl.substring(0, 50)}...`);
+
+                player = videojs(videoEl, {
+                    controls: true,
+                    autoplay: false,
+                    fluid: true,
+                    html5: {
+                        hls: {
+                            enableLowInitialPlaylist: true,
+                            smoothQualityChange: true,
+                            overrideNative: true,
+                        }
+                    },
+                    sources: [{
+                        src: finalUrl,
+                        type: 'application/x-mpegURL'
+                    }]
+                });
+
+                player.ready(function() {
+                    setStatus('✅ Video.js ready – playing...', 'success');
+                    setDebug('✅ Video.js: Player ready');
+                    isPlaying = true;
+                    resolve(player);
+                });
+
+                player.on('error', function() {
+                    const err = player.error();
+                    reject(new Error('Video.js error: ' + (err ? err.message : 'unknown')));
+                });
+
+                // Store reference
+                player = player;
+            });
+        }
+
+        // ============================================================
+        //  METHOD 3: Native HLS (Safari) + CORS Proxy
+        // ============================================================
+        function loadNativeHls(proxyUrl, originalUrl) {
+            return new Promise((resolve, reject) => {
+                const finalUrl = proxyUrl + encodeURIComponent(originalUrl);
+
+                setStatus('🍎 Native HLS (Safari) + proxy...', 'loading');
+                setDebug(`Native: ${finalUrl.substring(0, 80)}...`);
+
+                videoEl.src = finalUrl;
+                videoEl.load();
+
+                const playPromise = videoEl.play();
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => {
+                            setStatus('✅ Native HLS playing', 'success');
+                            setDebug('✅ Native HLS: playing');
+                            isPlaying = true;
+                            resolve(videoEl);
+                        })
+                        .catch((err) => {
+                            reject(new Error('Native play failed: ' + err.message));
+                        });
+                } else {
+                    // Some browsers return undefined
+                    setTimeout(() => {
+                        if (!videoEl.paused) {
+                            setStatus('✅ Native HLS playing', 'success');
+                            setDebug('✅ Native HLS: playing (fallback)');
+                            isPlaying = true;
+                            resolve(videoEl);
+                        } else {
+                            reject(new Error('Native HLS: playback not started'));
+                        }
+                    }, 2000);
+                }
+            });
+        }
+
+        // ============================================================
+        //  MAIN LOADER – tries methods in sequence
+        // ============================================================
+        async function loadVideo() {
+            destroyPlayer();
+            isPlaying = false;
+            retryBtn.disabled = true;
+            setStatus('🔄 Starting load attempts...', 'loading');
+
+            const methods = [
+                // 1. HLS.js with Referer
+                () => loadWithHlsJs(VIDEO_URL, 'https://classplusapp.com/'),
+
+                // 2. HLS.js with Classplus specific referer
+                () => loadWithHlsJs(VIDEO_URL, 'https://vs.classplusapp.com/'),
+
+                // 3. Video.js + CORS proxies
+                () => loadWithVideoJsProxy(PROXIES[0], VIDEO_URL),
+                () => loadWithVideoJsProxy(PROXIES[1], VIDEO_URL),
+                () => loadWithVideoJsProxy(PROXIES[2], VIDEO_URL),
+
+                // 4. Native HLS + proxies
+                () => loadNativeHls(PROXIES[0], VIDEO_URL),
+                () => loadNativeHls(PROXIES[1], VIDEO_URL),
+                () => loadNativeHls(PROXIES[2], VIDEO_URL),
+
+                // 5. Direct URL (last resort)
+                () => loadWithHlsJs(VIDEO_URL, document.location.origin),
+            ];
+
+            for (let i = 0; i < methods.length; i++) {
+                currentAttempt = i + 1;
+                setDebug(`Attempt ${currentAttempt}/${methods.length}...`);
+
+                try {
+                    const result = await methods[i]();
+                    setStatus('✅ Video playing successfully!', 'success');
+                    setDebug(`✅ Success with method ${currentAttempt}`);
+                    retryBtn.disabled = false;
+                    return result;
+                } catch (err) {
+                    console.warn(`Method ${currentAttempt} failed:`, err);
+                    setDebug(`❌ Attempt ${currentAttempt} failed: ${err.message.substring(0, 60)}`);
+                    // Clean up after failed attempt
+                    destroyPlayer();
+                }
             }
 
-            // ============================================================
-            //  METHOD 4: HLS.js + CORS Proxy (combined)
-            // ============================================================
-            function loadWithHlsJsProxy(proxyUrl, originalUrl) {
-                return new Promise((resolve, reject) => {
-                    if (!Hls || !Hls.isSupported()) {
-                        reject(new Error('HLS.js not supported'));
-                        return;
-                    }
+            // All methods failed
+            setStatus('❌ All playback methods failed. Check console.', 'error');
+            setDebug('❌ All attempts failed. Video may be restricted or link expired.');
+            retryBtn.disabled = false;
+            throw new Error('All playback methods failed');
+        }
 
-                    const finalUrl = proxyUrl + encodeURIComponent(originalUrl);
-
-                    setStatus('📡 HLS.js + Proxy...', 'loading');
-                    setDebug(`HLS.js + Proxy: ${proxyUrl.substring(0, 40)}...`);
-
-                    const hls = new Hls({
-                        enableWorker: true,
-                        lowLatencyMode: true,
-                        xhrSetup: function(xhr) {
-                            xhr.setRequestHeader('Referer', document.location.origin);
-                        }
-                    });
-
-                    let manifestLoaded = false;
-
-                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                        manifestLoaded = true;
-                        setStatus('✅ HLS.js + Proxy playing', 'success');
-                        setDebug('✅ HLS.js + Proxy: success');
-                        isPlaying = true;
-                        resolve(hls);
-                    });
-
-                    hls.on(Hls.Events.ERROR, function(event, data) {
-                        if (data.fatal) {
-                            reject(new Error('HLS.js fatal error: ' + data.details));
-                        }
-                    });
-
-                    const timeoutId = setTimeout(() => {
-                        if (!manifestLoaded) {
-                            reject(new Error('HLS.js + Proxy: timeout (30s)'));
-                        }
-                    }, 30000);
-
-                    hlsInstance = hls;
-
-                    try {
-                        hls.loadSource(finalUrl);
-                        hls.attachMedia(videoEl);
-                    } catch (err) {
-                        clearTimeout(timeoutId);
-                        reject(err);
-                    }
-                });
-            }
-
-            // ============================================================
-            //  MAIN LOADER – tries all methods in sequence
-            // ============================================================
-            async function loadVideo() {
-                if (loadInProgress) return;
-                loadInProgress = true;
-                retryBtn.disabled = true;
-
-                destroyPlayer();
-                isPlaying = false;
-                setStatus('🔄 Starting load attempts...', 'loading');
-
-                // Build list of all methods to try
-                const methods = [];
-
-                // 1. HLS.js with different Referers
-                for (const referer of REFERERS) {
-                    methods.push({
-                        name: `HLS.js (Referer: ${referer})`,
-                        fn: () => loadWithHlsJs(VIDEO_URL, referer)
-                    });
-                }
-
-                // 2. Video.js + CORS proxies
-                for (const proxy of PROXIES) {
-                    methods.push({
-                        name: `Video.js + Proxy: ${proxy.substring(0, 30)}...`,
-                        fn: () => loadWithVideoJsProxy(proxy, VIDEO_URL)
-                    });
-                }
-
-                // 3. Native HLS + proxies
-                for (const proxy of PROXIES) {
-                    methods.push({
-                        name: `Native HLS + Proxy: ${proxy.substring(0, 30)}...`,
-                        fn: () => loadNativeHls(proxy, VIDEO_URL)
-                    });
-                }
-
-                // 4. HLS.js + proxies
-                for (const proxy of PROXIES) {
-                    methods.push({
-                        name: `HLS.js + Proxy: ${proxy.substring(0, 30)}...`,
-                        fn: () => loadWithHlsJsProxy(proxy, VIDEO_URL)
-                    });
-                }
-
-                // 5. Direct HLS.js with current origin
-                methods.push({
-                    name: 'HLS.js (Direct)',
-                    fn: () => loadWithHlsJs(VIDEO_URL, document.location.origin)
-                });
-
-                let lastError = null;
-
-                for (let i = 0; i < methods.length; i++) {
-                    currentAttempt = i + 1;
-                    setDebug(`Attempt ${currentAttempt}/${methods.length}: ${methods[i].name}`);
-
-                    try {
-                        const result = await methods[i].fn();
-                        setStatus('✅ Video playing successfully!', 'success');
-                        setDebug(`✅ Success with method ${currentAttempt}: ${methods[i].name}`);
-                        retryBtn.disabled = false;
-                        loadInProgress = false;
-                        return result;
-                    } catch (err) {
-                        lastError = err;
-                        console.warn(`Method ${currentAttempt} failed:`, err.message);
-                        setDebug(`❌ Attempt ${currentAttempt} failed: ${err.message.substring(0, 60)}`);
-                        // Clean up after failed attempt
-                        destroyPlayer();
-                        // Small delay between attempts
-                        await new Promise(r => setTimeout(r, 300));
-                    }
-                }
-
-                // All methods failed
-                setStatus('❌ All playback methods failed. Click Retry.', 'error');
-                setDebug(`❌ All ${methods.length} attempts failed. Last error: ${lastError ? lastError.message : 'unknown'}`);
-                retryBtn.disabled = false;
-                loadInProgress = false;
-                throw new Error('All playback methods failed');
-            }
-
-            // ============================================================
-            //  RETRY LOGIC
-            // ============================================================
-            retryBtn.addEventListener('click', function() {
-                loadVideo().catch(err => {
-                    setStatus('❌ Retry failed: ' + err.message, 'error');
-                    setDebug('❌ ' + err.message);
-                });
-            });
-
-            // ============================================================
-            //  RESET LOGIC
-            // ============================================================
-            resetBtn.addEventListener('click', function() {
-                destroyPlayer();
-                setStatus('🔄 Player reset. Click Retry to play.', 'idle');
-                setDebug('🔄 Player manually reset');
-                retryBtn.disabled = false;
-                loadInProgress = false;
-            });
-
-            // ============================================================
-            //  HANDLE PAGE VISIBILITY (pause/resume)
-            // ============================================================
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden && player) {
-                    try { player.pause(); } catch (e) {}
-                }
-            });
-
-            // ============================================================
-            //  HANDLE UNLOAD
-            // ============================================================
-            window.addEventListener('beforeunload', function() {
-                destroyPlayer();
-            });
-
-            // ============================================================
-            //  AUTO-START
-            // ============================================================
-            console.log('🎬 Classplus Video Player - Complete');
-            console.log('🔗 Video URL:', VIDEO_URL);
-            console.log('📦 Proxies:', PROXIES);
-            console.log('🔁 Referers:', REFERERS);
-
+        // ============================================================
+        //  RETRY LOGIC
+        // ============================================================
+        retryBtn.addEventListener('click', function() {
             loadVideo().catch(err => {
-                setStatus('⚠️ Initial load failed – click Retry', 'error');
-                setDebug('⚠️ ' + err.message);
-                retryBtn.disabled = false;
-                loadInProgress = false;
+                setStatus('❌ Retry failed: ' + err.message, 'error');
+                setDebug('❌ ' + err.message);
             });
+        });
 
-        })();
+        // ============================================================
+        //  HANDLE PAGE VISIBILITY (pause/resume)
+        // ============================================================
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && player) {
+                player.pause && player.pause();
+            }
+        });
+
+        // ============================================================
+        //  AUTO-START
+        // ============================================================
+        loadVideo().catch(err => {
+            setStatus('⚠️ Initial load failed – click Retry', 'error');
+            setDebug('⚠️ ' + err.message);
+            retryBtn.disabled = false;
+        });
+
+        console.log('🎬 Classplus Video Player loaded');
+        console.log('🔗 Video URL:', VIDEO_URL);
+        console.log('📦 Proxies:', PROXIES);
     </script>
 
 </body>
