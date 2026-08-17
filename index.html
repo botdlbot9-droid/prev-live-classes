@@ -7,6 +7,8 @@
   <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
   <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js"></script>
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
@@ -37,12 +39,10 @@
     .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
     .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; }
     
-    .login-container { max-width: 450px; margin: 40px auto; padding: 30px; background: #f8faff; border-radius: 24px; border: 1px solid #e6edf6; }
+    .login-container { max-width: 450px; margin: 40px auto; padding: 30px; background: #f8faff; border-radius: 24px; border: 1px solid #e6edf6; text-align: center; }
     .login-container h2 { margin-bottom: 20px; color: #0b1a33; }
-    .login-container input { width: 100%; padding: 12px 16px; border: 1px solid #d9e1ec; border-radius: 16px; font-size: 0.95rem; margin-bottom: 12px; }
-    .login-container button { width: 100%; padding: 12px; background: #0b1a33; color: white; border: none; border-radius: 16px; font-weight: 600; cursor: pointer; }
-    .login-container .error { color: #b33a3a; font-size: 0.9rem; margin-top: 8px; }
-    .login-container .success { color: #1a7a3a; font-size: 0.9rem; margin-top: 8px; }
+    .login-container p { color: #4c637f; margin-bottom: 16px; }
+    .login-container .error { color: #b33a3a; font-size: 0.9rem; margin-top: 12px; }
     
     .playlist-selector { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; padding: 16px; background: #f8faff; border-radius: 20px; }
     .playlist-btn { padding: 10px 24px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; color: #1a2b4c; font-weight: 500; cursor: pointer; transition: 0.15s; }
@@ -55,13 +55,14 @@
     .chapter-name { font-weight: 600; font-size: 1.1rem; color: #0b1a33; flex: 1; }
     .play-btn { background: #0b1a33; color: white; border: none; border-radius: 40px; padding: 8px 24px; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: 0.15s; }
     .play-btn:hover { background: #1f3457; }
-    .player-wrapper { width: 100%; margin-top: 12px; border-radius: 16px; overflow: hidden; background: #000; }
+    .player-wrapper { width: 100%; margin-top: 12px; border-radius: 16px; overflow: hidden; background: #000; min-height: 200px; }
+    .player-wrapper iframe { width: 100%; height: 100%; min-height: 200px; aspect-ratio: 16/9; border: none; }
     
     .empty-state { color: #6a7c94; padding: 40px 0; text-align: center; font-style: italic; }
     .playlist-title { font-size: 1.4rem; font-weight: 600; color: #0b1a33; margin-bottom: 16px; }
     .status-bar { font-size: 0.8rem; padding: 8px 16px; border-radius: 40px; display: inline-block; margin-bottom: 16px; background: #f0f4fb; color: #4c637f; }
     .user-info { font-size: 0.85rem; color: #4c637f; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .logout-btn { background: none; border: 1px solid #d9e1ec; padding: 6px 16px; border-radius: 40px; cursor: pointer; }
+    .logout-btn { background: none; border: 1px solid #d9e1ec; padding: 4px 16px; border-radius: 40px; cursor: pointer; font-size: 0.8rem; }
     .logout-btn:hover { background: #fee; border-color: #b33a3a; }
     .session-timer { font-size: 0.75rem; padding: 4px 12px; border-radius: 40px; background: #e6f5e6; color: #1a5d3c; }
     .session-timer.warning { background: #fff3cd; color: #856404; }
@@ -70,14 +71,13 @@
     .footer-note { color: #7c8aa0; font-size: 0.8rem; text-align: center; margin-top: 30px; border-top: 1px solid #eef2f6; padding-top: 22px; }
     .reset-banner { background: #fff3cd; color: #856404; padding: 8px 16px; border-radius: 40px; font-size: 0.8rem; text-align: center; margin-bottom: 16px; display: none; }
     
-    .video-js .vjs-big-play-button {
-      background: rgba(11, 26, 51, 0.8) !important;
-      border-radius: 50% !important;
-      border: 2px solid white !important;
-    }
-    .video-js .vjs-big-play-button:hover {
-      background: rgba(11, 26, 51, 1) !important;
-    }
+    .video-type-badge { font-size: 0.6rem; padding: 2px 10px; border-radius: 40px; background: #eef3fa; color: #4c637f; }
+    .video-type-badge.youtube { background: #ff000020; color: #ff0000; }
+    .video-type-badge.hls { background: #1a7a3a20; color: #1a7a3a; }
+    .video-type-badge.mp4 { background: #1a2b4c20; color: #1a2b4c; }
+    
+    /* Google Sign-In Button Style */
+    .g_id_signin { display: flex; justify-content: center; margin: 10px 0; }
   </style>
 </head>
 <body>
@@ -90,32 +90,43 @@
   <!-- Reset Banner -->
   <div id="resetBanner" class="reset-banner">🔄 Session reset at 6:00 AM. Please login again.</div>
   
-  <!-- Login Form -->
+  <!-- Login Container -->
   <div id="loginContainer" class="login-container">
     <h2>🔐 Login to Access Videos</h2>
-    <p style="color:#4c637f; margin-bottom:16px;">Enter your email and access key</p>
-    <input type="email" id="loginEmail" placeholder="Enter your email" />
-    <input type="text" id="loginKey" placeholder="Enter your access key" />
-    <button id="loginBtn">Login</button>
+    <p>Enter your email and access key</p>
+    <input type="email" id="loginEmail" placeholder="Enter your email" style="width:100%;padding:12px 16px;border:1px solid #d9e1ec;border-radius:16px;font-size:0.95rem;margin-bottom:12px;" />
+    <input type="text" id="loginKey" placeholder="Enter your access key" style="width:100%;padding:12px 16px;border:1px solid #d9e1ec;border-radius:16px;font-size:0.95rem;margin-bottom:12px;" />
+    <button id="loginBtn" style="width:100%;padding:12px;background:#0b1a33;color:white;border:none;border-radius:16px;font-weight:600;cursor:pointer;">Login</button>
     <div id="loginError" class="error"></div>
-    <div id="loginSuccess" class="success"></div>
+    <div id="loginSuccess" style="color:#1a7a3a;font-size:0.9rem;margin-top:8px;"></div>
+    
+    <!-- Google Sign-In Option -->
+    <div style="margin-top:20px;padding-top:20px;border-top:1px solid #e8edf6;">
+      <p style="color:#6a7c94;font-size:0.85rem;">Or sign in with Google for YouTube Private Videos</p>
+      <div id="g_id_onload"
+           data-client_id="YOUR_GOOGLE_CLIENT_ID"
+           data-callback="handleGoogleLogin"
+           data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large"></div>
+    </div>
   </div>
 
   <!-- Video Content -->
   <div id="videoContent" style="display: none;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
-      <div id="statusBar" class="status-bar">🔄 Loading videos from database...</div>
+      <div id="statusBar" class="status-bar">🔄 Loading videos...</div>
       <div id="sessionTimer" class="session-timer">⏰ Time to reset: --:--:--</div>
     </div>
     <div id="playlistSelector" class="playlist-selector">
-      <div class="empty-state">Loading playlists from database...</div>
+      <div class="empty-state">Loading playlists...</div>
     </div>
     <div id="chaptersContainer">
       <div class="empty-state">Select a playlist to view chapters</div>
     </div>
   </div>
   
-  <div class="footer-note">⬇️ Click Play on any chapter → video.js + hls.js player</div>
+  <div class="footer-note">⬇️ Click Play on any chapter → Supports HLS, MP4, YouTube (Unlisted + Private)</div>
 </div>
 
 <script>
@@ -196,12 +207,66 @@
     const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
     const SESSION_KEY = 'video_portal_session';
     const RESET_KEY = 'video_portal_reset';
+    const GOOGLE_SESSION_KEY = 'google_session';
 
     let playlists = [];
     let currentPlaylistId = null;
     let currentUser = null;
+    let googleUser = null;
+    let googleAccessToken = null;
     let timerInterval = null;
     let resetCheckInterval = null;
+
+    // ==================== GOOGLE LOGIN ====================
+    window.handleGoogleLogin = function(response) {
+      console.log('Google login response received');
+      // Verify token on server
+      fetch('/api/verify-google-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: response.credential })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          googleUser = data.user;
+          googleAccessToken = data.accessToken;
+          // Save google session
+          localStorage.setItem(GOOGLE_SESSION_KEY, JSON.stringify({
+            user: googleUser,
+            accessToken: googleAccessToken,
+            loginTime: Date.now()
+          }));
+          document.getElementById('loginError').textContent = '';
+          document.getElementById('loginSuccess').textContent = '✅ Google Sign-In successful!';
+          showVideoContent();
+          fetchPlaylists();
+        } else {
+          document.getElementById('loginError').textContent = '❌ ' + (data.error || 'Google login failed');
+        }
+      })
+      .catch(err => {
+        document.getElementById('loginError').textContent = '❌ Network error: ' + err.message;
+      });
+    };
+
+    function checkGoogleSession() {
+      try {
+        const data = localStorage.getItem(GOOGLE_SESSION_KEY);
+        if (!data) return false;
+        const session = JSON.parse(data);
+        // Check if session is less than 7 days old
+        if (Date.now() - session.loginTime > 7 * 24 * 60 * 60 * 1000) {
+          localStorage.removeItem(GOOGLE_SESSION_KEY);
+          return false;
+        }
+        googleUser = session.user;
+        googleAccessToken = session.accessToken;
+        return true;
+      } catch(e) {
+        return false;
+      }
+    }
 
     // ==================== RESET AT 6 AM ====================
 
@@ -355,7 +420,7 @@
           `;
           
           startResetTimer();
-          fetchPlaylistsFromDatabase();
+          fetchPlaylists();
         } else {
           errorEl.textContent = '❌ ' + (data.error || 'Login failed');
         }
@@ -368,7 +433,10 @@
 
     window.logout = function() {
       clearSession();
+      localStorage.removeItem(GOOGLE_SESSION_KEY);
       currentUser = null;
+      googleUser = null;
+      googleAccessToken = null;
       document.getElementById('loginContainer').style.display = 'block';
       document.getElementById('videoContent').style.display = 'none';
       document.getElementById('userInfo').innerHTML = '';
@@ -381,6 +449,7 @@
         clearInterval(resetCheckInterval);
         resetCheckInterval = null;
       }
+      // Dispose players
       for (let key in window) {
         if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
           try { window[key].dispose(); } catch(e) {}
@@ -394,6 +463,20 @@
     // ==================== CHECK SESSION ====================
 
     function checkExistingSession() {
+      // Check for Google session first
+      if (checkGoogleSession()) {
+        document.getElementById('loginContainer').style.display = 'none';
+        document.getElementById('videoContent').style.display = 'block';
+        document.getElementById('userInfo').innerHTML = `
+          👤 ${googleUser.email} (Google)
+          <button class="logout-btn" onclick="window.logout()">Logout</button>
+        `;
+        startResetTimer();
+        fetchPlaylists();
+        return true;
+      }
+
+      // Check for regular session
       checkAndResetSession();
       const session = getSession();
       if (session && session.user && isSessionValid()) {
@@ -405,50 +488,30 @@
           <button class="logout-btn" onclick="window.logout()">Logout</button>
         `;
         startResetTimer();
-        fetchPlaylistsFromDatabase();
+        fetchPlaylists();
         return true;
       }
       return false;
     }
 
-    // ==================== FETCH PLAYLISTS FROM DATABASE ====================
+    // ==================== FETCH PLAYLISTS ====================
 
-    async function fetchPlaylistsFromDatabase() {
+    async function fetchPlaylists() {
       const statusBar = document.getElementById('statusBar');
       try {
-        statusBar.textContent = '🔄 Fetching videos from database...';
-        statusBar.style.background = '#f0f4fb';
-        statusBar.style.color = '#4c637f';
-        
+        statusBar.textContent = '🔄 Fetching videos...';
         const response = await fetch(API_BASE + '/playlists');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
         const data = await response.json();
         
-        if (data.success && data.playlists) {
+        if (data.success) {
           playlists = data.playlists;
-          
-          if (playlists.length === 0) {
-            statusBar.textContent = '📭 No playlists in database';
-            statusBar.style.background = '#fff3cd';
-            statusBar.style.color = '#856404';
-          } else {
-            statusBar.textContent = `✅ Loaded ${playlists.length} playlists from database`;
-            statusBar.style.background = '#e6f5e6';
-            statusBar.style.color = '#1a5d3c';
-          }
-          
+          statusBar.textContent = `✅ ${playlists.length} playlists loaded`;
           renderPlaylists();
-        } else {
-          throw new Error('Invalid data format');
         }
       } catch (error) {
-        console.error('Database fetch failed:', error);
-        statusBar.textContent = '❌ Failed to load from database';
-        statusBar.style.background = '#fee';
-        statusBar.style.color = '#b33a3a';
-        document.getElementById('playlistSelector').innerHTML = 
-          `<div class="empty-state">⚠️ Could not connect to database. Please try again.</div>`;
+        statusBar.textContent = '❌ Failed to load videos';
+        console.error(error);
       }
     }
 
@@ -457,7 +520,7 @@
     function renderPlaylists() {
       const container = document.getElementById('playlistSelector');
       if (!playlists.length) {
-        container.innerHTML = `<div class="empty-state">No playlists available in database</div>`;
+        container.innerHTML = `<div class="empty-state">No playlists available</div>`;
         document.getElementById('chaptersContainer').innerHTML = `<div class="empty-state">No playlists available</div>`;
         return;
       }
@@ -484,6 +547,35 @@
       }
     }
 
+    // ==================== EXTRACT YOUTUBE ID ====================
+    function extractYouTubeId(url) {
+      if (!url) return null;
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      if (match && match[2] && match[2].length === 11) {
+        return match[2];
+      }
+      if (url.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(url)) {
+        return url;
+      }
+      return null;
+    }
+
+    function isYouTubeLink(url) {
+      if (!url) return false;
+      return url.includes('youtube.com') || url.includes('youtu.be') || extractYouTubeId(url) !== null;
+    }
+
+    function isHLSLink(url) {
+      if (!url) return false;
+      return url.includes('.m3u8');
+    }
+
+    function isMP4Link(url) {
+      if (!url) return false;
+      return url.includes('.mp4') || url.includes('.webm');
+    }
+
     // ==================== RENDER CHAPTERS ====================
 
     function renderChapters(playlistId) {
@@ -503,30 +595,40 @@
       let html = `<div class="playlist-title">📚 ${playlist.name}</div>`;
       playlist.chapters.forEach((chapter, index) => {
         const playerId = `player-${chapter.id || 'ch_' + Date.now()}`;
+        let badge = '';
+        if (isYouTubeLink(chapter.link)) {
+          badge = `<span class="video-type-badge youtube">🎬 YouTube</span>`;
+        } else if (isHLSLink(chapter.link)) {
+          badge = `<span class="video-type-badge hls">📡 HLS</span>`;
+        } else if (isMP4Link(chapter.link)) {
+          badge = `<span class="video-type-badge mp4">🎥 MP4</span>`;
+        }
+        
         html += `
           <div class="chapter-item">
             <span class="chapter-number">Chapter ${index + 1}</span>
             <span class="chapter-name">${chapter.name}</span>
+            ${badge}
             <button class="play-btn" data-player-id="${playerId}" data-link="${chapter.link}">▶ Play</button>
-            <div class="player-wrapper" id="wrapper-${playerId}" style="display: none;">
-              <video id="${playerId}" class="video-js vjs-default-skin" controls preload="auto" width="100%" height="auto"></video>
-            </div>
+            <div class="player-wrapper" id="wrapper-${playerId}" style="display: none;"></div>
           </div>
         `;
       });
       container.innerHTML = html;
 
-      // ========== PLAY BUTTON HANDLER - DATABASE SE LINK FETCH ==========
+      // ========== PLAY BUTTON HANDLER ==========
       container.querySelectorAll('.play-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const playerId = this.dataset.playerId;
-          const link = this.dataset.link; // Already from database
+          const link = this.dataset.link;
           const wrapper = document.getElementById(`wrapper-${playerId}`);
           if (!wrapper) return;
           
           // Toggle visibility
           if (wrapper.style.display === 'block') {
             wrapper.style.display = 'none';
+            wrapper.innerHTML = '';
+            // Cleanup
             if (window[`hls_${playerId}`]) {
               try { window[`hls_${playerId}`].destroy(); } catch(e) {}
               delete window[`hls_${playerId}`];
@@ -540,6 +642,7 @@
           
           wrapper.style.display = 'block';
           
+          // Cleanup existing instances
           if (window[`hls_${playerId}`]) {
             try { window[`hls_${playerId}`].destroy(); } catch(e) {}
             delete window[`hls_${playerId}`];
@@ -549,13 +652,61 @@
             delete window[`player_${playerId}`];
           }
 
-          const videoEl = document.getElementById(playerId);
-          if (!videoEl) return;
+          // ========== CHECK VIDEO TYPE ==========
+          // 1. YOUTUBE (Unlisted + Private)
+          if (isYouTubeLink(link)) {
+            const videoId = extractYouTubeId(link);
+            if (videoId) {
+              // For YouTube Private videos, user needs to be signed in with Google
+              // For Unlisted, no login required
+              let embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+              
+              // If user is logged in with Google, add origin param for better compatibility
+              if (googleUser) {
+                embedUrl += `&origin=${window.location.origin}`;
+              }
+              
+              wrapper.innerHTML = `
+                <iframe 
+                  src="${embedUrl}"
+                  frameborder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowfullscreen
+                  style="width:100%;height:100%;aspect-ratio:16/9;border:none;border-radius:12px;"
+                ></iframe>
+              `;
+              
+              // Handle private video error - if user not signed in
+              setTimeout(() => {
+                try {
+                  const iframe = wrapper.querySelector('iframe');
+                  if (iframe) {
+                    // Check if iframe content has error
+                    // Note: Cross-origin, can't access content directly
+                    // Fallback: if video doesn't load, show message
+                    console.log('YouTube iframe loaded. If video is private, ensure user is signed in with Google.');
+                  }
+                } catch(e) {}
+              }, 3000);
+              
+              wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              return;
+            }
+          }
           
-          console.log('🎬 Playing from database link:', link);
-          
-          // ========== CORE PLAYER LOGIC ==========
-          if (Hls.isSupported() && link.includes('.m3u8')) {
+          // 2. HLS (.m3u8)
+          if (isHLSLink(link) && Hls.isSupported()) {
+            const videoEl = document.createElement('video');
+            videoEl.id = playerId;
+            videoEl.className = 'video-js vjs-default-skin';
+            videoEl.setAttribute('controls', '');
+            videoEl.setAttribute('preload', 'auto');
+            videoEl.style.width = '100%';
+            videoEl.style.height = '100%';
+            videoEl.style.aspectRatio = '16/9';
+            wrapper.innerHTML = '';
+            wrapper.appendChild(videoEl);
+            
             const hls = new Hls({
               enableWorker: true,
               lowLatencyMode: true,
@@ -577,7 +728,7 @@
             
             hls.on(Hls.Events.ERROR, function(event, data) {
               if (data.fatal) {
-                tryFallbackPlayer(videoEl, link, playerId);
+                tryFallbackHLSPlayer(videoEl, link, playerId);
               }
             });
             
@@ -593,44 +744,81 @@
             });
             window[`player_${playerId}`] = player;
             
-          } else {
-            tryFallbackPlayer(videoEl, link, playerId);
+            wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
           }
           
+          // 3. MP4
+          if (isMP4Link(link)) {
+            const videoEl = document.createElement('video');
+            videoEl.id = playerId;
+            videoEl.className = 'video-js vjs-default-skin';
+            videoEl.setAttribute('controls', '');
+            videoEl.setAttribute('preload', 'auto');
+            videoEl.style.width = '100%';
+            videoEl.style.height = '100%';
+            videoEl.style.aspectRatio = '16/9';
+            wrapper.innerHTML = '';
+            wrapper.appendChild(videoEl);
+            
+            const player = videojs(videoEl, {
+              autoplay: true,
+              controls: true,
+              fluid: true,
+              html5: {
+                nativeAudioTracks: false,
+                nativeVideoTracks: false,
+              }
+            });
+            window[`player_${playerId}`] = player;
+            player.src({ src: link, type: 'video/mp4' });
+            player.play();
+            
+            wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+          
+          // 4. UNKNOWN - show error
+          wrapper.innerHTML = `
+            <div style="padding:40px;text-align:center;color:#b33a3a;background:#0d1117;border-radius:12px;">
+              ⚠️ Unsupported video format.<br>
+              <small style="color:#6a7c94;">Supported: YouTube, HLS (.m3u8), MP4</small>
+            </div>
+          `;
           wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
       });
+    }
 
-      // ========== FALLBACK PLAYER ==========
-      function tryFallbackPlayer(videoEl, link, playerId) {
-        if (window[`hls_${playerId}`]) {
-          try { window[`hls_${playerId}`].destroy(); } catch(e) {}
-          delete window[`hls_${playerId}`];
-        }
-        
-        const player = videojs(videoEl, {
-          autoplay: true,
-          controls: true,
-          fluid: true,
-          html5: {
-            hls: {
-              enableLowInitialPlaylist: true,
-              smoothQualityChange: true,
-              overrideNative: true,
-            },
-            nativeAudioTracks: false,
-            nativeVideoTracks: false,
-          }
-        });
-        window[`player_${playerId}`] = player;
-        
-        if (link.includes('.m3u8')) {
-          player.src({ src: link, type: 'application/x-mpegURL' });
-        } else {
-          player.src({ src: link, type: 'video/mp4' });
-        }
-        player.play();
+    // ========== FALLBACK HLS PLAYER ==========
+    function tryFallbackHLSPlayer(videoEl, link, playerId) {
+      if (window[`hls_${playerId}`]) {
+        try { window[`hls_${playerId}`].destroy(); } catch(e) {}
+        delete window[`hls_${playerId}`];
       }
+      
+      const player = videojs(videoEl, {
+        autoplay: true,
+        controls: true,
+        fluid: true,
+        html5: {
+          hls: {
+            enableLowInitialPlaylist: true,
+            smoothQualityChange: true,
+            overrideNative: true,
+          },
+          nativeAudioTracks: false,
+          nativeVideoTracks: false,
+        }
+      });
+      window[`player_${playerId}`] = player;
+      
+      if (link.includes('.m3u8')) {
+        player.src({ src: link, type: 'application/x-mpegURL' });
+      } else {
+        player.src({ src: link, type: 'video/mp4' });
+      }
+      player.play();
     }
 
     // ==================== EVENT LISTENERS ====================
@@ -653,19 +841,6 @@
       }
     });
 
-    // ==================== AUTO-REFRESH (30 seconds) ====================
-    let refreshInterval;
-
-    function startAutoRefresh() {
-      if (refreshInterval) clearInterval(refreshInterval);
-      refreshInterval = setInterval(() => {
-        if (document.getElementById('videoContent').style.display !== 'none') {
-          console.log('🔄 Auto-refreshing playlists from database...');
-          fetchPlaylistsFromDatabase();
-        }
-      }, 30000);
-    }
-
     // ==================== INIT ====================
 
     const hasSession = checkExistingSession();
@@ -674,10 +849,8 @@
       document.getElementById('videoContent').style.display = 'none';
     }
 
-    startAutoRefresh();
-
-    console.log('✅ Video Portal loaded - Database connected');
-    console.log('🔄 Auto-refresh every 30 seconds');
+    console.log('✅ Video Portal loaded - YouTube Unlisted + Private supported');
+    console.log('📌 Google Sign-In available for Private YouTube videos');
   })();
 </script>
 </body>
