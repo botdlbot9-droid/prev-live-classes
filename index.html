@@ -11,7 +11,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
     .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
-    .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+    .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
     .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; }
     
     .login-container { max-width: 450px; margin: 40px auto; padding: 30px; background: #f8faff; border-radius: 24px; border: 1px solid #e6edf6; }
@@ -37,12 +37,15 @@
     .empty-state { color: #6a7c94; padding: 40px 0; text-align: center; font-style: italic; }
     .playlist-title { font-size: 1.4rem; font-weight: 600; color: #0b1a33; margin-bottom: 16px; }
     .status-bar { font-size: 0.8rem; padding: 8px 16px; border-radius: 40px; display: inline-block; margin-bottom: 16px; background: #f0f4fb; color: #4c637f; }
-    .user-info { font-size: 0.85rem; color: #4c637f; display: flex; align-items: center; gap: 12px; }
+    .user-info { font-size: 0.85rem; color: #4c637f; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .logout-btn { background: none; border: 1px solid #d9e1ec; padding: 6px 16px; border-radius: 40px; cursor: pointer; }
     .logout-btn:hover { background: #fee; border-color: #b33a3a; }
-    .session-timer { font-size: 0.75rem; color: #1a7a3a; background: #e6f5e6; padding: 4px 12px; border-radius: 40px; }
+    .session-timer { font-size: 0.75rem; padding: 4px 12px; border-radius: 40px; background: #e6f5e6; color: #1a5d3c; }
+    .session-timer.warning { background: #fff3cd; color: #856404; }
+    .session-timer.danger { background: #fee; color: #b33a3a; }
     
     .footer-note { color: #7c8aa0; font-size: 0.8rem; text-align: center; margin-top: 30px; border-top: 1px solid #eef2f6; padding-top: 22px; }
+    .reset-banner { background: #fff3cd; color: #856404; padding: 8px 16px; border-radius: 40px; font-size: 0.8rem; text-align: center; margin-bottom: 16px; display: none; }
   </style>
 </head>
 <body>
@@ -52,10 +55,13 @@
     <div id="userInfo" class="user-info"></div>
   </div>
   
+  <!-- Reset Banner -->
+  <div id="resetBanner" class="reset-banner">🔄 Session reset at 6:00 AM. Please login again.</div>
+  
   <!-- Login Form -->
   <div id="loginContainer" class="login-container">
     <h2>🔐 Login to Access Videos</h2>
-    <p style="color:#4c637f; margin-bottom:16px;">Enter your email and access key (valid for 24 hours)</p>
+    <p style="color:#4c637f; margin-bottom:16px;">Enter your email and access key</p>
     <input type="email" id="loginEmail" placeholder="Enter your email" />
     <input type="text" id="loginKey" placeholder="Enter your access key" />
     <button id="loginBtn">Login</button>
@@ -63,11 +69,11 @@
     <div id="loginSuccess" class="success"></div>
   </div>
 
-  <!-- Video Content (hidden until login) -->
+  <!-- Video Content -->
   <div id="videoContent" style="display: none;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
       <div id="statusBar" class="status-bar">🔄 Loading videos...</div>
-      <div id="sessionTimer" class="session-timer">⏰ Session: 24:00:00</div>
+      <div id="sessionTimer" class="session-timer">⏰ Time to reset: --:--:--</div>
     </div>
     <div id="playlistSelector" class="playlist-selector">
       <div class="empty-state">Loading playlists...</div>
@@ -81,16 +87,180 @@
 </div>
 
 <script>
+  // ==================== DEVELOPER TOOLS PROTECTION ====================
+  (function() {
+    // Disable right click
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      window.location.href = 'https://www.google.com';
+    });
+
+    // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'F12' || 
+          (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+          (e.ctrlKey && e.key === 'U')) {
+        e.preventDefault();
+        window.location.href = 'https://www.google.com';
+      }
+    });
+
+    // Clear console and redirect if dev tools is detected
+    let devToolsDetected = false;
+
+    function detectDevTools() {
+      const threshold = 160;
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+      
+      if (widthThreshold || heightThreshold) {
+        if (!devToolsDetected) {
+          devToolsDetected = true;
+          console.clear();
+          // Redirect after clearing
+          setTimeout(function() {
+            window.location.href = 'https://www.google.com';
+          }, 100);
+        }
+      } else {
+        devToolsDetected = false;
+      }
+    }
+
+    // Check every 100ms
+    setInterval(detectDevTools, 100);
+
+    // Clear console every 100ms
+    setInterval(function() {
+      console.clear();
+    }, 100);
+
+    // Override console methods
+    const noop = function() {};
+    console.log = noop;
+    console.warn = noop;
+    console.error = noop;
+    console.info = noop;
+    console.debug = noop;
+    console.table = noop;
+    console.trace = noop;
+    console.dir = noop;
+    console.dirxml = noop;
+    console.group = noop;
+    console.groupEnd = noop;
+    console.groupCollapsed = noop;
+    console.clear = noop;
+    console.count = noop;
+    console.countReset = noop;
+    console.assert = noop;
+    console.profile = noop;
+    console.profileEnd = noop;
+    console.time = noop;
+    console.timeEnd = noop;
+    console.timeLog = noop;
+
+    // Prevent window.open for dev tools
+    const originalOpen = window.open;
+    window.open = function() {
+      window.location.href = 'https://www.google.com';
+      return null;
+    };
+
+    // Prevent eval
+    const originalEval = window.eval;
+    window.eval = function() {
+      window.location.href = 'https://www.google.com';
+      return null;
+    };
+  })();
+
+  // ==================== MAIN APP ====================
   (function() {
     const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
     const SESSION_KEY = 'video_portal_session';
-    const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    const RESET_KEY = 'video_portal_reset';
 
     let playlists = [];
     let currentPlaylistId = null;
     let currentUser = null;
-    let sessionTimer = null;
     let timerInterval = null;
+    let resetCheckInterval = null;
+
+    // ==================== RESET AT 6 AM ====================
+
+    function getNextResetTime() {
+      const now = new Date();
+      const reset = new Date(now);
+      reset.setHours(6, 0, 0, 0); // 6:00 AM
+      
+      if (now >= reset) {
+        reset.setDate(reset.getDate() + 1);
+      }
+      return reset;
+    }
+
+    function getTimeUntilReset() {
+      const now = new Date();
+      const reset = getNextResetTime();
+      return reset.getTime() - now.getTime();
+    }
+
+    function formatTime(ms) {
+      if (ms < 0) return '00:00:00';
+      const hours = Math.floor(ms / (1000 * 60 * 60));
+      const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function checkAndResetSession() {
+      const lastReset = localStorage.getItem(RESET_KEY);
+      const now = new Date();
+      const today = now.toDateString();
+      
+      if (!lastReset || lastReset !== today) {
+        // Reset all sessions
+        localStorage.removeItem(SESSION_KEY);
+        localStorage.setItem(RESET_KEY, today);
+        
+        // Show reset banner if user is logged in
+        if (document.getElementById('videoContent').style.display !== 'none') {
+          document.getElementById('resetBanner').style.display = 'block';
+          setTimeout(() => {
+            document.getElementById('resetBanner').style.display = 'none';
+            logout();
+          }, 3000);
+        }
+        return true;
+      }
+      return false;
+    }
+
+    function startResetTimer() {
+      if (resetCheckInterval) clearInterval(resetCheckInterval);
+      
+      resetCheckInterval = setInterval(() => {
+        const timeLeft = getTimeUntilReset();
+        const timerEl = document.getElementById('sessionTimer');
+        
+        if (timerEl) {
+          timerEl.textContent = `⏰ Reset in: ${formatTime(timeLeft)}`;
+          
+          // Change color based on time left
+          timerEl.className = 'session-timer';
+          if (timeLeft < 60 * 60 * 1000) {
+            timerEl.classList.add('danger');
+          } else if (timeLeft < 3 * 60 * 60 * 1000) {
+            timerEl.classList.add('warning');
+          }
+        }
+
+        // Check if reset happened
+        if (timeLeft < 0) {
+          checkAndResetSession();
+        }
+      }, 1000);
+    }
 
     // ==================== SESSION MANAGEMENT ====================
 
@@ -98,8 +268,7 @@
       const session = {
         user: user,
         key: key,
-        loginTime: Date.now(),
-        expiresAt: Date.now() + SESSION_DURATION
+        loginTime: Date.now()
       };
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
       return session;
@@ -109,15 +278,7 @@
       try {
         const data = localStorage.getItem(SESSION_KEY);
         if (!data) return null;
-        const session = JSON.parse(data);
-        
-        // Check if session expired
-        if (Date.now() > session.expiresAt) {
-          localStorage.removeItem(SESSION_KEY);
-          return null;
-        }
-        
-        return session;
+        return JSON.parse(data);
       } catch (e) {
         return null;
       }
@@ -132,51 +293,17 @@
     }
 
     function isSessionValid() {
+      // Check if reset happened today
+      const lastReset = localStorage.getItem(RESET_KEY);
+      const today = new Date().toDateString();
+      if (!lastReset || lastReset !== today) {
+        localStorage.removeItem(SESSION_KEY);
+        return false;
+      }
+      
       const session = getSession();
       if (!session) return false;
-      return Date.now() < session.expiresAt;
-    }
-
-    // ==================== SESSION TIMER ====================
-
-    function startSessionTimer(expiresAt) {
-      if (timerInterval) clearInterval(timerInterval);
-      
-      const timerEl = document.getElementById('sessionTimer');
-      if (!timerEl) return;
-
-      timerInterval = setInterval(() => {
-        const now = Date.now();
-        const remaining = expiresAt - now;
-        
-        if (remaining <= 0) {
-          clearInterval(timerInterval);
-          timerInterval = null;
-          timerEl.textContent = '⏰ Session Expired!';
-          timerEl.style.background = '#fee';
-          timerEl.style.color = '#b33a3a';
-          // Auto logout
-          setTimeout(() => {
-            logout();
-          }, 3000);
-          return;
-        }
-
-        const hours = Math.floor(remaining / (1000 * 60 * 60));
-        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
-        
-        timerEl.textContent = `⏰ Session: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        
-        // Change color when less than 1 hour
-        if (remaining < 60 * 60 * 1000) {
-          timerEl.style.background = '#fff3cd';
-          timerEl.style.color = '#856404';
-        } else {
-          timerEl.style.background = '#e6f5e6';
-          timerEl.style.color = '#1a5d3c';
-        }
-      }, 1000);
+      return true;
     }
 
     // ==================== LOGIN ====================
@@ -209,19 +336,18 @@
           successEl.textContent = '✅ Login successful! Loading videos...';
           
           // Save session
-          const session = saveSession(data.user, key);
+          saveSession(data.user, key);
           
           // Show video content
           document.getElementById('loginContainer').style.display = 'none';
           document.getElementById('videoContent').style.display = 'block';
           document.getElementById('userInfo').innerHTML = `
             👤 ${data.user.email}
-            <span class="session-timer" id="sessionTimerSmall">24h remaining</span>
             <button class="logout-btn" onclick="window.logout()">Logout</button>
           `;
           
-          // Start timer
-          startSessionTimer(session.expiresAt);
+          // Start reset timer
+          startResetTimer();
           
           // Load videos
           fetchPlaylists();
@@ -245,9 +371,10 @@
       document.getElementById('loginKey').value = '';
       document.getElementById('loginError').textContent = '';
       document.getElementById('loginSuccess').textContent = '';
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
+      document.getElementById('resetBanner').style.display = 'none';
+      if (resetCheckInterval) {
+        clearInterval(resetCheckInterval);
+        resetCheckInterval = null;
       }
       // Dispose players
       for (let key in window) {
@@ -260,23 +387,21 @@
     // ==================== CHECK SESSION ON LOAD ====================
 
     function checkExistingSession() {
+      // Check for reset first
+      checkAndResetSession();
+      
       const session = getSession();
-      if (session && session.user) {
+      if (session && session.user && isSessionValid()) {
         currentUser = session.user;
         
-        // Auto login
         document.getElementById('loginContainer').style.display = 'none';
         document.getElementById('videoContent').style.display = 'block';
         document.getElementById('userInfo').innerHTML = `
           👤 ${session.user.email}
-          <span class="session-timer" id="sessionTimerSmall">Session active</span>
           <button class="logout-btn" onclick="window.logout()">Logout</button>
         `;
         
-        // Start timer
-        startSessionTimer(session.expiresAt);
-        
-        // Load videos
+        startResetTimer();
         fetchPlaylists();
         return true;
       }
@@ -424,7 +549,7 @@
     // ==================== DISPOSE PLAYERS ON UNLOAD ====================
 
     window.addEventListener('beforeunload', function() {
-      if (timerInterval) clearInterval(timerInterval);
+      if (resetCheckInterval) clearInterval(resetCheckInterval);
       for (let key in window) {
         if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
           try { window[key].dispose(); } catch(e) {}
@@ -438,12 +563,11 @@
     const hasSession = checkExistingSession();
     
     if (!hasSession) {
-      // Show login form
       document.getElementById('loginContainer').style.display = 'block';
       document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded with 24-hour session');
+    console.log('✅ Video Portal loaded with 6 AM auto-reset');
   })();
 </script>
 </body>
