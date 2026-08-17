@@ -1,4 +1,4 @@
-// Cloudflare Worker - Save and retrieve video data
+// Cloudflare Worker - Playlist and Chapter Management
 // Deploy this as a Worker on Cloudflare
 
 const KV_NAMESPACE = 'VIDEO_DATA'; // Create this KV namespace in Cloudflare
@@ -19,12 +19,12 @@ export default {
       });
     }
 
-    // GET - Retrieve all videos
+    // GET - Retrieve all playlists
     if (method === 'GET') {
       try {
-        const data = await env.VIDEO_DATA.get('videos', 'json');
+        const data = await env.VIDEO_DATA.get('playlists', 'json');
         return new Response(JSON.stringify({ 
-          items: data || [] 
+          playlists: data || [] 
         }), {
           headers: {
             'Content-Type': 'application/json',
@@ -44,13 +44,13 @@ export default {
       }
     }
 
-    // PUT - Save all videos
+    // PUT - Save all playlists
     if (method === 'PUT') {
       try {
         const body = await request.json();
-        if (!body.items || !Array.isArray(body.items)) {
+        if (!body.playlists || !Array.isArray(body.playlists)) {
           return new Response(JSON.stringify({ 
-            error: 'Invalid data format. Expected { items: [...] }' 
+            error: 'Invalid data format. Expected { playlists: [...] }' 
           }), {
             status: 400,
             headers: {
@@ -60,11 +60,11 @@ export default {
           });
         }
         
-        await env.VIDEO_DATA.put('videos', JSON.stringify(body.items));
+        await env.VIDEO_DATA.put('playlists', JSON.stringify(body.playlists));
         
         return new Response(JSON.stringify({ 
           message: 'Data saved successfully',
-          count: body.items.length
+          count: body.playlists.length
         }), {
           headers: {
             'Content-Type': 'application/json',
