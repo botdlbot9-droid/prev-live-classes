@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Portal</title>
+  <title>Video Portal - Playlists</title>
   <!-- Video.js + HLS.js -->
   <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
   <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
@@ -14,15 +14,24 @@
     .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
     .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; }
     .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; letter-spacing: -0.3px; }
-    .video-list { display: flex; flex-direction: column; gap: 28px; margin-top: 10px; }
-    .video-item { background: #fafdff; border-radius: 24px; padding: 20px 24px 24px; border: 1px solid #e6edf6; transition: 0.15s; }
-    .video-item:hover { border-color: #c8d4e4; }
-    .video-item .class-name { font-weight: 600; font-size: 1.3rem; color: #0b1a33; margin-bottom: 6px; }
-    .play-btn { background: #0b1a33; color: white; border: none; border-radius: 40px; padding: 12px 32px; font-weight: 500; font-size: 1rem; cursor: pointer; margin: 12px 0 8px; transition: 0.15s; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-    .play-btn:hover { background: #1f3457; transform: scale(1.01); }
-    .player-wrapper { margin-top: 14px; border-radius: 20px; overflow: hidden; background: #000; }
+    
+    /* Playlist selector */
+    .playlist-selector { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; padding: 16px; background: #f8faff; border-radius: 20px; }
+    .playlist-btn { padding: 10px 24px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; color: #1a2b4c; font-weight: 500; cursor: pointer; transition: 0.15s; font-size: 0.95rem; }
+    .playlist-btn:hover { border-color: #1a2b4c; background: #f0f4fe; }
+    .playlist-btn.active { border-color: #1a2b4c; background: #1a2b4c; color: white; }
+    
+    .chapters-container { margin-top: 10px; }
+    .chapter-item { background: #fafdff; border-radius: 20px; padding: 16px 22px; margin-bottom: 14px; border: 1px solid #e6edf6; transition: 0.15s; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .chapter-item:hover { border-color: #c8d4e4; }
+    .chapter-number { font-weight: 700; color: #1a2b4c; font-size: 1.1rem; min-width: 80px; }
+    .chapter-name { font-weight: 600; font-size: 1.1rem; color: #0b1a33; flex: 1; }
+    .play-btn { background: #0b1a33; color: white; border: none; border-radius: 40px; padding: 8px 24px; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: 0.15s; }
+    .play-btn:hover { background: #1f3457; transform: scale(1.02); }
+    .player-wrapper { width: 100%; margin-top: 12px; border-radius: 16px; overflow: hidden; background: #000; }
     .empty-state { color: #6a7c94; padding: 40px 0; text-align: center; font-style: italic; }
     .footer-note { color: #7c8aa0; font-size: 0.8rem; text-align: center; margin-top: 30px; border-top: 1px solid #eef2f6; padding-top: 22px; }
+    .playlist-title { font-size: 1.4rem; font-weight: 600; color: #0b1a33; margin-bottom: 16px; }
     .loading { text-align: center; padding: 40px; color: #4c637f; }
     .error-msg { background: #fee; color: #b33a3a; padding: 12px 20px; border-radius: 12px; margin: 10px 0; }
   </style>
@@ -32,50 +41,75 @@
   <div class="header">
     <h1>📽️ Video Portal</h1>
   </div>
-  <!-- user video list (only class name + play button, no link, no admin) -->
-  <div id="videoListContainer" class="video-list">
-    <div class="loading">Loading videos...</div>
+  
+  <!-- Playlist selector -->
+  <div id="playlistSelector" class="playlist-selector">
+    <div class="loading">Loading playlists...</div>
   </div>
-  <div class="footer-note">⬇️ Click Play → video.js + hls.js player</div>
+  
+  <!-- Chapters display -->
+  <div id="chaptersContainer" class="chapters-container">
+    <div class="empty-state">Select a playlist to view chapters</div>
+  </div>
+  
+  <div class="footer-note">⬇️ Click Play on any chapter → video.js + hls.js player</div>
 </div>
 
 <script>
   (function() {
     // ---------- CONFIG ----------
-    // Replace with your Cloudflare Worker / API endpoint
-    const API_BASE = 'https://your-cloudflare-worker.workers.dev/api/videos';
-    const STORAGE_KEY = 'videoClassData';
+    const API_BASE = 'https://your-cloudflare-worker.workers.dev/api/playlists';
+    const STORAGE_KEY = 'playlistData';
 
-    let videoItems = [];
+    let playlists = [];
+    let currentPlaylistId = null;
 
     // ---------- DATA HELPERS ----------
     function loadFromStorage() {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        try { videoItems = JSON.parse(stored); if (!Array.isArray(videoItems)) videoItems = []; } 
-        catch(e) { videoItems = []; }
+        try { 
+          playlists = JSON.parse(stored); 
+          if (!Array.isArray(playlists)) playlists = []; 
+        } catch(e) { playlists = []; }
       } else {
-        // fallback demo data
-        videoItems = [
-          { id: 'demo1', className: 'Big Buck Bunny (HLS)', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
-          { id: 'demo2', className: 'Sample MP4', link: 'https://www.w3schools.com/html/mov_bbb.mp4' }
+        // Demo data - Trigonometry with chapters
+        playlists = [
+          {
+            id: 'trigonometry',
+            name: 'Trigonometry',
+            chapters: [
+              { id: 'ch1', name: 'Chapter 1: Introduction to Trigonometry', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
+              { id: 'ch2', name: 'Chapter 2: Trigonometric Ratios', link: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+              { id: 'ch3', name: 'Chapter 3: Trigonometric Identities', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
+            ]
+          },
+          {
+            id: 'algebra',
+            name: 'Algebra',
+            chapters: [
+              { id: 'al1', name: 'Chapter 1: Linear Equations', link: 'https://www.w3schools.com/html/mov_bbb.mp4' },
+              { id: 'al2', name: 'Chapter 2: Quadratic Equations', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' }
+            ]
+          }
         ];
         saveToStorage();
       }
     }
 
     function saveToStorage() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(videoItems));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists));
     }
+
+    function genId() { return Date.now().toString(36) + Math.random().toString(36).substring(2,6); }
 
     // ---------- FETCH FROM CLOUDFLARE API ----------
     async function fetchFromCloudflare() {
-      const container = document.getElementById('videoListContainer');
+      const container = document.getElementById('playlistSelector');
       try {
         if (!API_BASE || API_BASE.includes('your-cloudflare')) {
-          // API not configured, use local storage
           loadFromStorage();
-          renderUserList();
+          renderPlaylists();
           return;
         }
 
@@ -83,51 +117,83 @@
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         
-        if (data.items && Array.isArray(data.items)) {
-          videoItems = data.items;
+        if (data.playlists && Array.isArray(data.playlists)) {
+          playlists = data.playlists;
           saveToStorage();
-          renderUserList();
+          renderPlaylists();
         } else {
-          // fallback to local
           loadFromStorage();
-          renderUserList();
+          renderPlaylists();
         }
       } catch (error) {
         console.warn('Cloudflare fetch failed, using local data:', error);
         loadFromStorage();
-        renderUserList();
-        // show error but still display content
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-msg';
-        errorDiv.textContent = '⚠️ Could not connect to server. Showing cached content.';
-        container.prepend(errorDiv);
+        renderPlaylists();
       }
     }
 
-    // ---------- RENDER USER LIST (no link shown, no admin) ----------
-    function renderUserList() {
-      const container = document.getElementById('videoListContainer');
+    // ---------- RENDER PLAYLISTS ----------
+    function renderPlaylists() {
+      const container = document.getElementById('playlistSelector');
       if (!container) return;
 
-      // Remove any existing error messages from previous renders
-      const existingError = container.querySelector('.error-msg');
-      if (existingError) existingError.remove();
-
-      if (!videoItems.length) {
-        container.innerHTML = `<div class="empty-state">📭 No videos available.</div>`;
+      if (!playlists.length) {
+        container.innerHTML = `<div class="empty-state">No playlists available.</div>`;
+        document.getElementById('chaptersContainer').innerHTML = `<div class="empty-state">No playlists available</div>`;
         return;
       }
 
       let html = '';
-      videoItems.forEach(item => {
-        const link = item.link || '#';
-        const className = item.className || 'Untitled';
-        const playerId = `player-${item.id || Date.now().toString(36) + Math.random().toString(36).substring(2,6)}`;
+      playlists.forEach(playlist => {
+        const isActive = playlist.id === currentPlaylistId;
+        html += `<button class="playlist-btn ${isActive ? 'active' : ''}" data-id="${playlist.id}">${playlist.name}</button>`;
+      });
+      container.innerHTML = html;
+
+      // Add click events
+      container.querySelectorAll('.playlist-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.dataset.id;
+          currentPlaylistId = id;
+          renderPlaylists(); // re-render to update active state
+          renderChapters(id);
+        });
+      });
+
+      // Auto-select first playlist if none selected
+      if (!currentPlaylistId && playlists.length > 0) {
+        currentPlaylistId = playlists[0].id;
+        renderPlaylists();
+        renderChapters(currentPlaylistId);
+      } else if (currentPlaylistId) {
+        renderChapters(currentPlaylistId);
+      }
+    }
+
+    // ---------- RENDER CHAPTERS ----------
+    function renderChapters(playlistId) {
+      const container = document.getElementById('chaptersContainer');
+      if (!container) return;
+
+      const playlist = playlists.find(p => p.id === playlistId);
+      if (!playlist) {
+        container.innerHTML = `<div class="empty-state">Playlist not found</div>`;
+        return;
+      }
+
+      if (!playlist.chapters || playlist.chapters.length === 0) {
+        container.innerHTML = `<div class="empty-state">No chapters in this playlist</div>`;
+        return;
+      }
+
+      let html = `<div class="playlist-title">📚 ${playlist.name}</div>`;
+      playlist.chapters.forEach((chapter, index) => {
+        const playerId = `player-${chapter.id || genId()}`;
         html += `
-          <div class="video-item" data-id="${item.id}">
-            <div class="class-name">📌 ${className}</div>
-            <button class="play-btn" data-player-id="${playerId}" data-link="${link}" data-class="${className}">▶ Play</button>
-            <!-- link is hidden from user -->
+          <div class="chapter-item" data-id="${chapter.id}">
+            <span class="chapter-number">Chapter ${index + 1}</span>
+            <span class="chapter-name">${chapter.name}</span>
+            <button class="play-btn" data-player-id="${playerId}" data-link="${chapter.link}" data-chapter="${chapter.name}">▶ Play</button>
             <div class="player-wrapper" id="wrapper-${playerId}" style="display: none;">
               <video id="${playerId}" class="video-js vjs-default-skin" controls preload="auto" width="100%" height="auto"></video>
             </div>
@@ -141,15 +207,21 @@
         btn.addEventListener('click', function() {
           const playerId = this.dataset.playerId;
           const link = this.dataset.link;
+          const chapterName = this.dataset.chapter;
           const wrapper = document.getElementById(`wrapper-${playerId}`);
           if (!wrapper) return;
           
           // Toggle visibility
           if (wrapper.style.display === 'block') {
-            // If already visible, hide it (optional)
-            // wrapper.style.display = 'none';
-            // return;
+            wrapper.style.display = 'none';
+            // Dispose player if hiding
+            if (window[`player_${playerId}`]) {
+              try { window[`player_${playerId}`].dispose(); } catch(e) {}
+              delete window[`player_${playerId}`];
+            }
+            return;
           }
+          
           wrapper.style.display = 'block';
           
           // Dispose existing player
@@ -199,18 +271,17 @@
     });
 
     // ---------- INIT ----------
-    // First try to load from storage for immediate display
     loadFromStorage();
-    renderUserList();
+    renderPlaylists();
     
-    // Then try to fetch fresh data from Cloudflare
+    // Try to fetch fresh data from Cloudflare
     setTimeout(() => {
       if (API_BASE && !API_BASE.includes('your-cloudflare')) {
         fetchFromCloudflare();
       }
     }, 300);
 
-    console.log('✅ Video Portal loaded (user view - no admin)');
+    console.log('✅ Video Portal loaded (playlist view)');
   })();
 </script>
 </body>
