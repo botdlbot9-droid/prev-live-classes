@@ -111,7 +111,7 @@
 <script>
   (function() {
     // ----- CONFIG -----
-    const API_BASE = 'https://video-api.your-subdomain.workers.dev/api/playlists';
+    const API_BASE = 'http://video-play-api.newstreamcp.workers.dev/api/playlists';
     const STORAGE_KEY = 'playlistData';
     const ADMIN_PASSWORD = 'admin123';
 
@@ -126,16 +126,7 @@
           playlists = JSON.parse(stored);
           if (!Array.isArray(playlists)) playlists = [];
         } else {
-          playlists = [
-            {
-              id: 'pl_demo1',
-              name: 'Trigonometry',
-              chapters: [
-                { id: 'ch1', name: 'Chapter 1: Introduction', link: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8' },
-                { id: 'ch2', name: 'Chapter 2: Ratios', link: 'https://www.w3schools.com/html/mov_bbb.mp4' }
-              ]
-            }
-          ];
+          playlists = [];
           saveData();
         }
       } catch(e) { playlists = []; }
@@ -171,6 +162,11 @@
     }
 
     async function syncToCloudflare() {
+      if (playlists.length === 0) {
+        showFeedback('⚠️ No playlists to sync. Add some first!', 'error', 'playlistFeedback');
+        return;
+      }
+      
       try {
         const response = await fetch(API_BASE, {
           method: 'PUT',
@@ -182,7 +178,7 @@
         const data = await response.json();
         
         if (data.success) {
-          showFeedback(`✅ Synced successfully (${data.count} playlists)`, 'success', 'playlistFeedback');
+          showFeedback(`✅ Synced successfully (${playlists.length} playlists)`, 'success', 'playlistFeedback');
           updateApiStatus('connected');
         }
       } catch (error) {
