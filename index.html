@@ -1,404 +1,650 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Classplus Video Player</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Video Portal</title>
+  <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
+  <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
+    .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .app { padding: 16px; border-radius: 20px; }
+      .header h1 { font-size: 1.3rem; }
+      .chapter-item { padding: 12px 16px; gap: 10px; }
+      .chapter-number { font-size: 0.9rem; min-width: 60px; }
+      .chapter-name { font-size: 0.95rem; }
+      .play-btn { padding: 6px 16px; font-size: 0.8rem; }
+      .playlist-btn { padding: 8px 16px; font-size: 0.85rem; }
+      .login-container { padding: 20px; margin: 20px auto; }
+      .user-info { font-size: 0.75rem; gap: 8px; }
+      .session-timer { font-size: 0.65rem; padding: 3px 8px; }
+      .status-bar { font-size: 0.7rem; padding: 6px 12px; }
+    }
 
-    <!-- Video.js CDN -->
-    <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
-    <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
+    @media (max-width: 480px) {
+      .app { padding: 12px; border-radius: 16px; }
+      .header h1 { font-size: 1.1rem; }
+      .chapter-item { flex-direction: column; align-items: stretch; gap: 8px; }
+      .chapter-number { min-width: auto; }
+      .play-btn { width: 100%; text-align: center; }
+    }
 
-    <!-- HLS.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js">
-    </script>
-
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            background: #0d1117;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-family: system-ui, sans-serif;
-            padding: 20px;
-        }
-        .player-wrapper {
-            max-width: 900px;
-            width: 100%;
-            background: #161b22;
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-        }
-        .video-title {
-            color: #f0f6fc;
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            padding-left: 8px;
-        }
-        .video-js {
-            width: 100%;
-            height: auto;
-            aspect-ratio: 16 / 9;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #000;
-        }
-        .status-bar {
-            margin-top: 14px;
-            padding: 10px 16px;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            background: #21262d;
-            color: #8b949e;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .status-bar .success {
-            color: #3fb950;
-        }
-        .status-bar .error {
-            color: #f85149;
-        }
-        .status-bar .loading {
-            color: #d29922;
-        }
-        .btn-retry {
-            background: #238636;
-            border: none;
-            color: white;
-            padding: 6px 18px;
-            border-radius: 30px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-retry:hover {
-            background: #2ea043;
-        }
-        .btn-retry:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .debug-info {
-            font-size: 0.75rem;
-            color: #484f58;
-            margin-top: 8px;
-            word-break: break-all;
-            padding: 6px 12px;
-            background: #0d1117;
-            border-radius: 8px;
-            border: 1px solid #21262d;
-        }
-    </style>
+    .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; }
+    
+    .login-container { max-width: 450px; margin: 40px auto; padding: 30px; background: #f8faff; border-radius: 24px; border: 1px solid #e6edf6; }
+    .login-container h2 { margin-bottom: 20px; color: #0b1a33; }
+    .login-container input { width: 100%; padding: 12px 16px; border: 1px solid #d9e1ec; border-radius: 16px; font-size: 0.95rem; margin-bottom: 12px; }
+    .login-container button { width: 100%; padding: 12px; background: #0b1a33; color: white; border: none; border-radius: 16px; font-weight: 600; cursor: pointer; }
+    .login-container .error { color: #b33a3a; font-size: 0.9rem; margin-top: 8px; }
+    .login-container .success { color: #1a7a3a; font-size: 0.9rem; margin-top: 8px; }
+    
+    .playlist-selector { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; padding: 16px; background: #f8faff; border-radius: 20px; }
+    .playlist-btn { padding: 10px 24px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; color: #1a2b4c; font-weight: 500; cursor: pointer; transition: 0.15s; }
+    .playlist-btn:hover { border-color: #1a2b4c; background: #f0f4fe; }
+    .playlist-btn.active { border-color: #1a2b4c; background: #1a2b4c; color: white; }
+    
+    .chapter-item { background: #fafdff; border-radius: 20px; padding: 16px 22px; margin-bottom: 14px; border: 1px solid #e6edf6; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .chapter-item:hover { border-color: #c8d4e4; }
+    .chapter-number { font-weight: 700; color: #1a2b4c; font-size: 1.1rem; min-width: 80px; }
+    .chapter-name { font-weight: 600; font-size: 1.1rem; color: #0b1a33; flex: 1; }
+    .play-btn { background: #0b1a33; color: white; border: none; border-radius: 40px; padding: 8px 24px; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: 0.15s; }
+    .play-btn:hover { background: #1f3457; }
+    .player-wrapper { width: 100%; margin-top: 12px; border-radius: 16px; overflow: hidden; background: #000; }
+    
+    .empty-state { color: #6a7c94; padding: 40px 0; text-align: center; font-style: italic; }
+    .playlist-title { font-size: 1.4rem; font-weight: 600; color: #0b1a33; margin-bottom: 16px; }
+    .status-bar { font-size: 0.8rem; padding: 8px 16px; border-radius: 40px; display: inline-block; margin-bottom: 16px; background: #f0f4fb; color: #4c637f; }
+    .user-info { font-size: 0.85rem; color: #4c637f; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .logout-btn { background: none; border: 1px solid #d9e1ec; padding: 6px 16px; border-radius: 40px; cursor: pointer; }
+    .logout-btn:hover { background: #fee; border-color: #b33a3a; }
+    .session-timer { font-size: 0.75rem; padding: 4px 12px; border-radius: 40px; background: #e6f5e6; color: #1a5d3c; }
+    .session-timer.warning { background: #fff3cd; color: #856404; }
+    .session-timer.danger { background: #fee; color: #b33a3a; }
+    
+    .footer-note { color: #7c8aa0; font-size: 0.8rem; text-align: center; margin-top: 30px; border-top: 1px solid #eef2f6; padding-top: 22px; }
+    .reset-banner { background: #fff3cd; color: #856404; padding: 8px 16px; border-radius: 40px; font-size: 0.8rem; text-align: center; margin-bottom: 16px; display: none; }
+  </style>
 </head>
 <body>
+<div class="app">
+  <div class="header">
+    <h1>📽️ Video Portal</h1>
+    <div id="userInfo" class="user-info"></div>
+  </div>
+  
+  <!-- Reset Banner -->
+  <div id="resetBanner" class="reset-banner">🔄 Session reset at 6:00 AM. Please login again.</div>
+  
+  <!-- Login Form -->
+  <div id="loginContainer" class="login-container">
+    <h2>🔐 Login to Access Videos</h2>
+    <p style="color:#4c637f; margin-bottom:16px;">Enter your email and access key</p>
+    <input type="email" id="loginEmail" placeholder="Enter your email" />
+    <input type="text" id="loginKey" placeholder="Enter your access key" />
+    <button id="loginBtn">Login</button>
+    <div id="loginError" class="error"></div>
+    <div id="loginSuccess" class="success"></div>
+  </div>
 
-    <div class="player-wrapper">
-        <div class="video-title">📺 Classplus Video</div>
-
-        <!-- Video Player -->
-        <video id="my-video" class="video-js vjs-default-skin" controls preload="auto" playsinline>
-            <p class="vjs-no-js">Please enable JavaScript to view this video.</p>
-        </video>
-
-        <!-- Status Bar -->
-        <div class="status-bar" id="statusBar">
-            <span id="statusText">⏳ Initializing player...</span>
-            <button class="btn-retry" id="retryBtn">🔄 Retry</button>
-        </div>
-
-        <!-- Debug Info -->
-        <div class="debug-info" id="debugInfo">🔍 Waiting for video...</div>
+  <!-- Video Content -->
+  <div id="videoContent" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+      <div id="statusBar" class="status-bar">🔄 Loading videos...</div>
+      <div id="sessionTimer" class="session-timer">⏰ Time to reset: --:--:--</div>
     </div>
+    <div id="playlistSelector" class="playlist-selector">
+      <div class="empty-state">Loading playlists...</div>
+    </div>
+    <div id="chaptersContainer">
+      <div class="empty-state">Select a playlist to view chapters</div>
+    </div>
+  </div>
+  
+  <div class="footer-note">⬇️ Click Play on any chapter → video.js + hls.js player</div>
+</div>
 
-    <script>
-        // ============================================================
-        //  CONFIG – CHANGE YOUR VIDEO URL HERE
-        // ============================================================
-        const VIDEO_URL =
-            'https://vs.classplusapp.com/hls/6a7c17d170851ec23806f9f2/720p20.m3u8';
+<script>
+  // ==================== DEVELOPER TOOLS PROTECTION (Desktop Only) ====================
+  (function() {
+    // Check if mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+    
+    // Only apply dev tools protection on desktop
+    if (!isMobile) {
+      // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'F12' || 
+            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+            (e.ctrlKey && e.key === 'U')) {
+          e.preventDefault();
+          window.location.href = 'https://www.google.com';
+        }
+      });
 
-        // CORS proxies (try in order)
-        const PROXIES = [
-            'https://corsproxy.io/?',
-            'https://api.allorigins.win/raw?url=',
-            'https://cors-anywhere.herokuapp.com/'
-        ];
+      // Detect dev tools
+      let devToolsDetected = false;
 
-        // ============================================================
-        //  DOM REFS
-        // ============================================================
-        const videoEl = document.getElementById('my-video');
-        const statusText = document.getElementById('statusText');
-        const debugInfo = document.getElementById('debugInfo');
-        const retryBtn = document.getElementById('retryBtn');
+      function detectDevTools() {
+        const threshold = 160;
+        const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+        const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+        
+        if (widthThreshold || heightThreshold) {
+          if (!devToolsDetected) {
+            devToolsDetected = true;
+            console.clear();
+            setTimeout(function() {
+              window.location.href = 'https://www.google.com';
+            }, 100);
+          }
+        } else {
+          devToolsDetected = false;
+        }
+      }
 
-        let player = null;
-        let hlsInstance = null;
-        let currentAttempt = 0;
-        let isPlaying = false;
+      setInterval(detectDevTools, 100);
+      setInterval(function() { console.clear(); }, 100);
 
-        // ============================================================
-        //  STATUS HELPER
-        // ============================================================
-        function setStatus(msg, type = 'loading') {
-            statusText.innerHTML = msg;
-            statusText.className = type;
+      // Override console methods
+      const noop = function() {};
+      console.log = noop;
+      console.warn = noop;
+      console.error = noop;
+      console.info = noop;
+      console.debug = noop;
+      console.table = noop;
+      console.trace = noop;
+      console.dir = noop;
+      console.dirxml = noop;
+      console.group = noop;
+      console.groupEnd = noop;
+      console.groupCollapsed = noop;
+      console.clear = noop;
+      console.count = noop;
+      console.countReset = noop;
+      console.assert = noop;
+      console.profile = noop;
+      console.profileEnd = noop;
+      console.time = noop;
+      console.timeEnd = noop;
+      console.timeLog = noop;
+
+      // Prevent window.open for dev tools
+      window.open = function() {
+        window.location.href = 'https://www.google.com';
+        return null;
+      };
+
+      // Prevent eval
+      window.eval = function() {
+        window.location.href = 'https://www.google.com';
+        return null;
+      };
+    }
+  })();
+
+  // ==================== MAIN APP ====================
+  (function() {
+    const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
+    const SESSION_KEY = 'video_portal_session';
+    const RESET_KEY = 'video_portal_reset';
+
+    let playlists = [];
+    let currentPlaylistId = null;
+    let currentUser = null;
+    let timerInterval = null;
+    let resetCheckInterval = null;
+
+    // ==================== RESET AT 6 AM ====================
+
+    function getNextResetTime() {
+      const now = new Date();
+      const reset = new Date(now);
+      reset.setHours(6, 0, 0, 0);
+      
+      if (now >= reset) {
+        reset.setDate(reset.getDate() + 1);
+      }
+      return reset;
+    }
+
+    function getTimeUntilReset() {
+      const now = new Date();
+      const reset = getNextResetTime();
+      return reset.getTime() - now.getTime();
+    }
+
+    function formatTime(ms) {
+      if (ms < 0) return '00:00:00';
+      const hours = Math.floor(ms / (1000 * 60 * 60));
+      const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function checkAndResetSession() {
+      const lastReset = localStorage.getItem(RESET_KEY);
+      const now = new Date();
+      const today = now.toDateString();
+      
+      if (!lastReset || lastReset !== today) {
+        localStorage.removeItem(SESSION_KEY);
+        localStorage.setItem(RESET_KEY, today);
+        
+        if (document.getElementById('videoContent').style.display !== 'none') {
+          document.getElementById('resetBanner').style.display = 'block';
+          setTimeout(() => {
+            document.getElementById('resetBanner').style.display = 'none';
+            logout();
+          }, 3000);
+        }
+        return true;
+      }
+      return false;
+    }
+
+    function startResetTimer() {
+      if (resetCheckInterval) clearInterval(resetCheckInterval);
+      
+      resetCheckInterval = setInterval(() => {
+        const timeLeft = getTimeUntilReset();
+        const timerEl = document.getElementById('sessionTimer');
+        
+        if (timerEl) {
+          timerEl.textContent = `⏰ Reset in: ${formatTime(timeLeft)}`;
+          timerEl.className = 'session-timer';
+          if (timeLeft < 60 * 60 * 1000) {
+            timerEl.classList.add('danger');
+          } else if (timeLeft < 3 * 60 * 60 * 1000) {
+            timerEl.classList.add('warning');
+          }
         }
 
-        function setDebug(msg) {
-            debugInfo.textContent = '🔍 ' + msg;
+        if (timeLeft < 0) {
+          checkAndResetSession();
         }
+      }, 1000);
+    }
 
-        // ============================================================
-        //  DESTROY OLD PLAYER / HLS
-        // ============================================================
-        function destroyPlayer() {
-            if (hlsInstance) {
-                try { hlsInstance.destroy(); } catch (e) {}
-                hlsInstance = null;
-            }
-            if (player) {
-                try { player.dispose(); } catch (e) {}
-                player = null;
-            }
-            // Reset video element
-            videoEl.removeAttribute('src');
-            videoEl.load();
-        }
+    // ==================== SESSION MANAGEMENT ====================
 
-        // ============================================================
-        //  METHOD 1: HLS.js DIRECT (with Referer headers)
-        // ============================================================
-        function loadWithHlsJs(url, referer = 'https://classplusapp.com/') {
-            return new Promise((resolve, reject) => {
-                if (!Hls.isSupported()) {
-                    reject(new Error('HLS.js not supported in this browser'));
-                    return;
-                }
+    function saveSession(user, key) {
+      const session = {
+        user: user,
+        key: key,
+        loginTime: Date.now()
+      };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      return session;
+    }
 
-                setStatus('📡 Loading with HLS.js...', 'loading');
-                setDebug(`HLS.js: ${url.substring(0, 80)}...`);
+    function getSession() {
+      try {
+        const data = localStorage.getItem(SESSION_KEY);
+        if (!data) return null;
+        return JSON.parse(data);
+      } catch (e) {
+        return null;
+      }
+    }
 
-                const hls = new Hls({
-                    enableWorker: true,
-                    lowLatencyMode: true,
-                    xhrSetup: function(xhr, xhrUrl) {
-                        // Add important headers
-                        xhr.setRequestHeader('Referer', referer);
-                        xhr.setRequestHeader('Origin', 'https://classplusapp.com');
-                        xhr.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-                        // If you have cookies, add here:
-                        // xhr.setRequestHeader('Cookie', 'your_cookie_here');
-                    }
-                });
+    function clearSession() {
+      localStorage.removeItem(SESSION_KEY);
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
 
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    setStatus('✅ Manifest loaded – playing...', 'success');
-                    setDebug('✅ HLS.js: Manifest parsed successfully');
-                    isPlaying = true;
-                    resolve(hls);
-                });
+    function isSessionValid() {
+      const lastReset = localStorage.getItem(RESET_KEY);
+      const today = new Date().toDateString();
+      if (!lastReset || lastReset !== today) {
+        localStorage.removeItem(SESSION_KEY);
+        return false;
+      }
+      const session = getSession();
+      if (!session) return false;
+      return true;
+    }
 
-                hls.on(Hls.Events.ERROR, function(event, data) {
-                    if (data.fatal) {
-                        reject(new Error('HLS.js fatal error: ' + JSON.stringify(data)));
-                    } else {
-                        setDebug('⚠️ HLS.js non-fatal: ' + data.type);
-                    }
-                });
+    // ==================== LOGIN ====================
 
-                hls.loadSource(url);
-                hls.attachMedia(videoEl);
+    async function login() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const key = document.getElementById('loginKey').value.trim();
+      const errorEl = document.getElementById('loginError');
+      const successEl = document.getElementById('loginSuccess');
 
-                // Store reference
-                hlsInstance = hls;
-            });
-        }
+      errorEl.textContent = '';
+      successEl.textContent = '';
 
-        // ============================================================
-        //  METHOD 2: Video.js + CORS Proxy
-        // ============================================================
-        function loadWithVideoJsProxy(proxyUrl, originalUrl) {
-            return new Promise((resolve, reject) => {
-                const finalUrl = proxyUrl + encodeURIComponent(originalUrl);
+      if (!email || !key) {
+        errorEl.textContent = '⚠️ Please enter both email and key';
+        return;
+      }
 
-                setStatus('🌐 Loading via CORS proxy...', 'loading');
-                setDebug(`Proxy: ${proxyUrl.substring(0, 50)}...`);
-
-                player = videojs(videoEl, {
-                    controls: true,
-                    autoplay: false,
-                    fluid: true,
-                    html5: {
-                        hls: {
-                            enableLowInitialPlaylist: true,
-                            smoothQualityChange: true,
-                            overrideNative: true,
-                        }
-                    },
-                    sources: [{
-                        src: finalUrl,
-                        type: 'application/x-mpegURL'
-                    }]
-                });
-
-                player.ready(function() {
-                    setStatus('✅ Video.js ready – playing...', 'success');
-                    setDebug('✅ Video.js: Player ready');
-                    isPlaying = true;
-                    resolve(player);
-                });
-
-                player.on('error', function() {
-                    const err = player.error();
-                    reject(new Error('Video.js error: ' + (err ? err.message : 'unknown')));
-                });
-
-                // Store reference
-                player = player;
-            });
-        }
-
-        // ============================================================
-        //  METHOD 3: Native HLS (Safari) + CORS Proxy
-        // ============================================================
-        function loadNativeHls(proxyUrl, originalUrl) {
-            return new Promise((resolve, reject) => {
-                const finalUrl = proxyUrl + encodeURIComponent(originalUrl);
-
-                setStatus('🍎 Native HLS (Safari) + proxy...', 'loading');
-                setDebug(`Native: ${finalUrl.substring(0, 80)}...`);
-
-                videoEl.src = finalUrl;
-                videoEl.load();
-
-                const playPromise = videoEl.play();
-                if (playPromise !== undefined) {
-                    playPromise
-                        .then(() => {
-                            setStatus('✅ Native HLS playing', 'success');
-                            setDebug('✅ Native HLS: playing');
-                            isPlaying = true;
-                            resolve(videoEl);
-                        })
-                        .catch((err) => {
-                            reject(new Error('Native play failed: ' + err.message));
-                        });
-                } else {
-                    // Some browsers return undefined
-                    setTimeout(() => {
-                        if (!videoEl.paused) {
-                            setStatus('✅ Native HLS playing', 'success');
-                            setDebug('✅ Native HLS: playing (fallback)');
-                            isPlaying = true;
-                            resolve(videoEl);
-                        } else {
-                            reject(new Error('Native HLS: playback not started'));
-                        }
-                    }, 2000);
-                }
-            });
-        }
-
-        // ============================================================
-        //  MAIN LOADER – tries methods in sequence
-        // ============================================================
-        async function loadVideo() {
-            destroyPlayer();
-            isPlaying = false;
-            retryBtn.disabled = true;
-            setStatus('🔄 Starting load attempts...', 'loading');
-
-            const methods = [
-                // 1. HLS.js with Referer
-                () => loadWithHlsJs(VIDEO_URL, 'https://classplusapp.com/'),
-
-                // 2. HLS.js with Classplus specific referer
-                () => loadWithHlsJs(VIDEO_URL, 'https://vs.classplusapp.com/'),
-
-                // 3. Video.js + CORS proxies
-                () => loadWithVideoJsProxy(PROXIES[0], VIDEO_URL),
-                () => loadWithVideoJsProxy(PROXIES[1], VIDEO_URL),
-                () => loadWithVideoJsProxy(PROXIES[2], VIDEO_URL),
-
-                // 4. Native HLS + proxies
-                () => loadNativeHls(PROXIES[0], VIDEO_URL),
-                () => loadNativeHls(PROXIES[1], VIDEO_URL),
-                () => loadNativeHls(PROXIES[2], VIDEO_URL),
-
-                // 5. Direct URL (last resort)
-                () => loadWithHlsJs(VIDEO_URL, document.location.origin),
-            ];
-
-            for (let i = 0; i < methods.length; i++) {
-                currentAttempt = i + 1;
-                setDebug(`Attempt ${currentAttempt}/${methods.length}...`);
-
-                try {
-                    const result = await methods[i]();
-                    setStatus('✅ Video playing successfully!', 'success');
-                    setDebug(`✅ Success with method ${currentAttempt}`);
-                    retryBtn.disabled = false;
-                    return result;
-                } catch (err) {
-                    console.warn(`Method ${currentAttempt} failed:`, err);
-                    setDebug(`❌ Attempt ${currentAttempt} failed: ${err.message.substring(0, 60)}`);
-                    // Clean up after failed attempt
-                    destroyPlayer();
-                }
-            }
-
-            // All methods failed
-            setStatus('❌ All playback methods failed. Check console.', 'error');
-            setDebug('❌ All attempts failed. Video may be restricted or link expired.');
-            retryBtn.disabled = false;
-            throw new Error('All playback methods failed');
-        }
-
-        // ============================================================
-        //  RETRY LOGIC
-        // ============================================================
-        retryBtn.addEventListener('click', function() {
-            loadVideo().catch(err => {
-                setStatus('❌ Retry failed: ' + err.message, 'error');
-                setDebug('❌ ' + err.message);
-            });
+      try {
+        const response = await fetch(API_BASE + '/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, key })
         });
 
-        // ============================================================
-        //  HANDLE PAGE VISIBILITY (pause/resume)
-        // ============================================================
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden && player) {
-                player.pause && player.pause();
+        const data = await response.json();
+
+        if (data.success) {
+          currentUser = data.user;
+          successEl.textContent = '✅ Login successful! Loading videos...';
+          
+          saveSession(data.user, key);
+          
+          document.getElementById('loginContainer').style.display = 'none';
+          document.getElementById('videoContent').style.display = 'block';
+          document.getElementById('userInfo').innerHTML = `
+            👤 ${data.user.email}
+            <button class="logout-btn" onclick="window.logout()">Logout</button>
+          `;
+          
+          startResetTimer();
+          fetchPlaylists();
+        } else {
+          errorEl.textContent = '❌ ' + (data.error || 'Login failed');
+        }
+      } catch (error) {
+        errorEl.textContent = '❌ Connection error: ' + error.message;
+      }
+    }
+
+    // ==================== LOGOUT ====================
+
+    window.logout = function() {
+      clearSession();
+      currentUser = null;
+      document.getElementById('loginContainer').style.display = 'block';
+      document.getElementById('videoContent').style.display = 'none';
+      document.getElementById('userInfo').innerHTML = '';
+      document.getElementById('loginEmail').value = '';
+      document.getElementById('loginKey').value = '';
+      document.getElementById('loginError').textContent = '';
+      document.getElementById('loginSuccess').textContent = '';
+      document.getElementById('resetBanner').style.display = 'none';
+      if (resetCheckInterval) {
+        clearInterval(resetCheckInterval);
+        resetCheckInterval = null;
+      }
+      for (let key in window) {
+        if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
+          try { window[key].dispose(); } catch(e) {}
+        }
+      }
+    };
+
+    // ==================== CHECK SESSION ====================
+
+    function checkExistingSession() {
+      checkAndResetSession();
+      const session = getSession();
+      if (session && session.user && isSessionValid()) {
+        currentUser = session.user;
+        document.getElementById('loginContainer').style.display = 'none';
+        document.getElementById('videoContent').style.display = 'block';
+        document.getElementById('userInfo').innerHTML = `
+          👤 ${session.user.email}
+          <button class="logout-btn" onclick="window.logout()">Logout</button>
+        `;
+        startResetTimer();
+        fetchPlaylists();
+        return true;
+      }
+      return false;
+    }
+
+    // ==================== FETCH PLAYLISTS ====================
+
+    async function fetchPlaylists() {
+      const statusBar = document.getElementById('statusBar');
+      try {
+        statusBar.textContent = '🔄 Fetching videos...';
+        const response = await fetch(API_BASE + '/playlists');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          playlists = data.playlists;
+          statusBar.textContent = `✅ ${playlists.length} playlists loaded`;
+          renderPlaylists();
+        }
+      } catch (error) {
+        statusBar.textContent = '❌ Failed to load videos';
+        console.error(error);
+      }
+    }
+
+    // ==================== RENDER FUNCTIONS ====================
+
+    function renderPlaylists() {
+      const container = document.getElementById('playlistSelector');
+      if (!playlists.length) {
+        container.innerHTML = `<div class="empty-state">No playlists available</div>`;
+        document.getElementById('chaptersContainer').innerHTML = `<div class="empty-state">No playlists available</div>`;
+        return;
+      }
+
+      let html = '';
+      playlists.forEach(playlist => {
+        const isActive = playlist.id === currentPlaylistId;
+        html += `<button class="playlist-btn ${isActive ? 'active' : ''}" data-id="${playlist.id}">${playlist.name}</button>`;
+      });
+      container.innerHTML = html;
+
+      container.querySelectorAll('.playlist-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          currentPlaylistId = this.dataset.id;
+          renderPlaylists();
+          renderChapters(currentPlaylistId);
+        });
+      });
+
+      if (!currentPlaylistId && playlists.length > 0) {
+        currentPlaylistId = playlists[0].id;
+        renderPlaylists();
+        renderChapters(currentPlaylistId);
+      }
+    }
+
+    // ==================== RENDER CHAPTERS (UPDATED PLAYER) ====================
+
+    function renderChapters(playlistId) {
+      const container = document.getElementById('chaptersContainer');
+      const playlist = playlists.find(p => p.id === playlistId);
+      
+      if (!playlist) {
+        container.innerHTML = `<div class="empty-state">Playlist not found</div>`;
+        return;
+      }
+
+      if (!playlist.chapters || playlist.chapters.length === 0) {
+        container.innerHTML = `<div class="empty-state">No chapters in this playlist</div>`;
+        return;
+      }
+
+      let html = `<div class="playlist-title">📚 ${playlist.name}</div>`;
+      playlist.chapters.forEach((chapter, index) => {
+        const playerId = `player-${chapter.id || 'ch_' + Date.now()}`;
+        html += `
+          <div class="chapter-item">
+            <span class="chapter-number">Chapter ${index + 1}</span>
+            <span class="chapter-name">${chapter.name}</span>
+            <button class="play-btn" data-player-id="${playerId}" data-link="${chapter.link}">▶ Play</button>
+            <div class="player-wrapper" id="wrapper-${playerId}" style="display: none;">
+              <video id="${playerId}" class="video-js vjs-default-skin" controls preload="auto" width="100%" height="auto"></video>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+
+      // ========== UPDATED PLAY BUTTON HANDLER ==========
+      container.querySelectorAll('.play-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const playerId = this.dataset.playerId;
+          const link = this.dataset.link;
+          const wrapper = document.getElementById(`wrapper-${playerId}`);
+          if (!wrapper) return;
+          
+          // Toggle visibility
+          if (wrapper.style.display === 'block') {
+            wrapper.style.display = 'none';
+            // Cleanup HLS instance
+            if (window[`hls_${playerId}`]) {
+              try { window[`hls_${playerId}`].destroy(); } catch(e) {}
+              delete window[`hls_${playerId}`];
             }
+            if (window[`player_${playerId}`]) {
+              try { window[`player_${playerId}`].dispose(); } catch(e) {}
+              delete window[`player_${playerId}`];
+            }
+            return;
+          }
+          
+          wrapper.style.display = 'block';
+          
+          // Cleanup existing instances
+          if (window[`hls_${playerId}`]) {
+            try { window[`hls_${playerId}`].destroy(); } catch(e) {}
+            delete window[`hls_${playerId}`];
+          }
+          if (window[`player_${playerId}`]) {
+            try { window[`player_${playerId}`].dispose(); } catch(e) {}
+            delete window[`player_${playerId}`];
+          }
+
+          const videoEl = document.getElementById(playerId);
+          if (!videoEl) return;
+          
+          // ========== CORE PLAYER LOGIC ==========
+          // Check if it's an HLS stream and HLS.js is supported
+          if (Hls.isSupported() && link.includes('.m3u8')) {
+            // Use HLS.js directly for better CORS handling
+            const hls = new Hls({
+              enableWorker: true,
+              lowLatencyMode: true,
+              xhrSetup: function(xhr, url) {
+                xhr.setRequestHeader('Referer', 'https://classplusapp.com/');
+                xhr.setRequestHeader('Origin', 'https://classplusapp.com');
+              }
+            });
+            
+            hls.loadSource(link);
+            hls.attachMedia(videoEl);
+            
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+              videoEl.play().catch(e => console.log('Play error:', e));
+            });
+            
+            hls.on(Hls.Events.ERROR, function(event, data) {
+              if (data.fatal) {
+                console.error('HLS fatal error:', data);
+                // Fallback to Video.js
+                tryFallbackPlayer(videoEl, link, playerId);
+              }
+            });
+            
+            // Store hls instance for cleanup
+            window[`hls_${playerId}`] = hls;
+            
+            // Create videojs for controls
+            const player = videojs(videoEl, {
+              controls: true,
+              fluid: true,
+              html5: {
+                nativeAudioTracks: false,
+                nativeVideoTracks: false,
+              }
+            });
+            window[`player_${playerId}`] = player;
+            
+          } else {
+            // Fallback: Use Video.js
+            tryFallbackPlayer(videoEl, link, playerId);
+          }
+          // ========== END CORE PLAYER LOGIC ==========
+          
+          wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
+      });
 
-        // ============================================================
-        //  AUTO-START
-        // ============================================================
-        loadVideo().catch(err => {
-            setStatus('⚠️ Initial load failed – click Retry', 'error');
-            setDebug('⚠️ ' + err.message);
-            retryBtn.disabled = false;
+      // ========== FALLBACK PLAYER FUNCTION ==========
+      function tryFallbackPlayer(videoEl, link, playerId) {
+        // Dispose any existing HLS
+        if (window[`hls_${playerId}`]) {
+          try { window[`hls_${playerId}`].destroy(); } catch(e) {}
+          delete window[`hls_${playerId}`];
+        }
+        
+        const player = videojs(videoEl, {
+          autoplay: true,
+          controls: true,
+          fluid: true,
+          html5: {
+            hls: {
+              enableLowInitialPlaylist: true,
+              smoothQualityChange: true,
+              overrideNative: true,
+            },
+            nativeAudioTracks: false,
+            nativeVideoTracks: false,
+          }
         });
+        window[`player_${playerId}`] = player;
+        
+        if (link.includes('.m3u8')) {
+          player.src({ src: link, type: 'application/x-mpegURL' });
+        } else {
+          player.src({ src: link, type: 'video/mp4' });
+        }
+        player.play();
+      }
+    }
 
-        console.log('🎬 Classplus Video Player loaded');
-        console.log('🔗 Video URL:', VIDEO_URL);
-        console.log('📦 Proxies:', PROXIES);
-    </script>
+    // ==================== EVENT LISTENERS ====================
 
+    document.getElementById('loginBtn').addEventListener('click', login);
+    document.getElementById('loginKey').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+    document.getElementById('loginEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+
+    // ==================== DISPOSE PLAYERS ====================
+
+    window.addEventListener('beforeunload', function() {
+      if (resetCheckInterval) clearInterval(resetCheckInterval);
+      for (let key in window) {
+        if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
+          try { window[key].dispose(); } catch(e) {}
+        }
+        if (key.startsWith('hls_') && window[key] && typeof window[key].destroy === 'function') {
+          try { window[key].destroy(); } catch(e) {}
+        }
+      }
+    });
+
+    // ==================== INIT ====================
+
+    const hasSession = checkExistingSession();
+    if (!hasSession) {
+      document.getElementById('loginContainer').style.display = 'block';
+      document.getElementById('videoContent').style.display = 'none';
+    }
+
+    console.log('✅ Video Portal loaded with updated player');
+  })();
+</script>
 </body>
 </html>
